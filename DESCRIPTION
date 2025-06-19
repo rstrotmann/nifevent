@@ -12,6 +12,7 @@ Imports:
   nif,
   dplyr,
   tidyr,
+  ggplot2,
   tidyselect,
   lubridate,
   lifecycle,

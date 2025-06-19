@@ -7,17 +7,20 @@
 #' @param analyte The analyte.
 #' @param dose The dose, defaults to all doses, if NULL.
 #' @param group Grouping variable.
+#' @inheritDotParams survminer::ggsurvplot risk.table pval conf.int surv.median.line
 #'
 #' @returns A ggplot object.
 #'
 #' @importFrom survival survfit
 #' @importFrom survminer ggsurvplot
+#' @import ggplot2
 #' @export
 kmplot <- function(
     nif,
     analyte,
     dose = NULL,
-    group = NULL
+    group = NULL,
+    ...
   ) {
   # Validate input is a NIF object
   if (!inherits(nif, "nif")) {
@@ -50,5 +53,13 @@ kmplot <- function(
   }
 
   sf <- survival::survfit(Surv(TIMED, DV) ~ group, data = temp)
-  survminer::ggsurvplot(sf)
+  names(sf$strata) <- gsub("group=", "", names(sf$strata))
+
+  p <- survminer::ggsurvplot(sf, ...)
+  legend <- nif::nice_enumeration(group)
+
+  p$plot <- p$plot +
+    ggplot2::labs(fill = legend, color = legend)
+
+  return(p)
 }
