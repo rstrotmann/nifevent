@@ -53,13 +53,20 @@ kmplot <- function(
   }
 
   sf <- survival::survfit(Surv(TIMED, DV) ~ group, data = temp)
-  names(sf$strata) <- gsub("group=", "", names(sf$strata))
+  if(!is.null(sf$strata)) {
+    names(sf$strata) <- gsub("group=", "", names(sf$strata))
+  }
 
   p <- survminer::ggsurvplot(sf, ...)
   legend <- nif::nice_enumeration(group)
 
   p$plot <- p$plot +
     ggplot2::labs(fill = legend, color = legend)
+
+  if(is.null(sf$strata)) {
+    p$plot <- p$plot +
+      theme(legend.position = "none")
+  }
 
   return(p)
 }
