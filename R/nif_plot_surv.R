@@ -1,3 +1,32 @@
+#' Prepare data set for survival analysis
+#'
+#' @param nif A nif data set.
+#' @param analyte The analyte as character.
+#' @param group The grouping variable, as character.
+#'
+#' @returns A data frame.
+#' @keywords internal
+#' @noRd
+make_surv_dataset <- function(nif, analyte, group = NULL) {
+  nif %>%
+    as.data.frame() %>%
+    filter(.data$TAFD >= 0) %>%
+    filter(.data$ANALYTE == analyte) %>%
+    filter(.data$EVID == 0) %>%
+    mutate(TIMED = .data$TAFD/24) %>%
+    group_by(.data$ID) %>%
+    mutate(ev_first = min(c(.data$TIMED[.data$DV == 1], Inf))) %>%
+    mutate(ev_lastobs = max(.data$TIMED)) %>%
+    ungroup() %>%
+    select("ID", any_of(c(group)), "ev_first", "ev_lastobs") %>%
+    distinct() %>%
+    rowwise() %>%
+    mutate(time = min(c(.data$ev_first, .data$ev_lastobs))) %>%
+    mutate(status = case_when(
+      is.infinite(.data$ev_first) ~ 0, .default = 1))
+}
+
+
 #' Kaplan-Meier plot for events
 #'
 #' @description
@@ -31,18 +60,23 @@ kmplot <- function(
     dose <- unique(filter(nif, .data$EVID == 0)$DOSE)
   }
 
-  if(is.null(group)) {
-    group <- 1
-  }
+  # if(is.null(group)) {
+  #   group <- 1
+  # }
 
-  temp <- nif %>%
-    as.data.frame() %>%
-    filter(
-      .data$EVID == 0,
-      .data$ANALYTE == analyte,
-      .data$DOSE %in% dose
-    ) %>%
-    mutate(TIMED = .data$TAFD / 24)
+  # temp <- nif %>%
+  #   as.data.frame() %>%
+  #   filter(
+  #     .data$EVID == 0,
+  #     .data$ANALYTE == analyte,
+  #     .data$DOSE %in% dose
+  #   ) %>%
+  #   mutate(TIMED = .data$TAFD / 24)
+
+  temp <- make_surv_dataset(
+    filter(nif, .data$DOSE %in% dose),
+    analyte,
+    group)
 
   if(!is.null(group) & all(group %in% names(temp))) {
     temp <- temp %>%
@@ -52,7 +86,10 @@ kmplot <- function(
       mutate(group = 1)
   }
 
-  sf <- survival::survfit(Surv(TIMED, DV) ~ group, data = temp)
+
+  # sf <- survival::survfit(Surv(TIMED, DV) ~ group, data = temp)
+  sf <- survival::survfit(Surv(time, status) ~ group, data = temp)
+
   if(!is.null(sf$strata)) {
     names(sf$strata) <- gsub("group=", "", names(sf$strata))
   }
