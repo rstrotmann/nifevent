@@ -122,6 +122,10 @@ make_event <- function(
     }
   }
 
+  if(is.null(analyte) && is.null(testcd)) {
+    stop("analyte and testcd cannot be both NULL!")
+  }
+
   domain_name <- tolower(domain)
   if (!domain_name %in% names(sdtm$domains)) {
     stop(paste0("Domain '", domain_name, "' not found in sdtm object"))
@@ -266,9 +270,22 @@ add_event_observation <- function(
     stop("nif must be an nif object")
   }
 
+  if (!inherits(sdtm, "sdtm")) {
+    stop("sdtm must be an sdtm object")
+  }
+
+  if(is.null(analyte) && is.null(testcd)) {
+    stop("analyte and testcd cannot be both NULL!")
+  }
+
   # Validate metabolite parameter
   if (!is.logical(metabolite) || length(metabolite) != 1) {
     stop("metabolite must be a single logical value")
+  }
+
+  # Validate debug parameter
+  if (!is.logical(debug) || length(debug) != 1) {
+    stop("debug must be a single logical value")
   }
 
   debug = isTRUE(debug) | isTRUE(nif:::nif_option_value("debug"))
