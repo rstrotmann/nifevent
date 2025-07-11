@@ -4,7 +4,15 @@
 \alias{kmplot}
 \title{Kaplan-Meier plot for events}
 \usage{
-kmplot(nif, analyte, dose = NULL, group = NULL, ...)
+kmplot(
+  nif,
+  analyte,
+  dose = NULL,
+  group = NULL,
+  title = NULL,
+  y_label = NULL,
+  ...
+)
 }
 \arguments{
 \item{nif}{A nif object.}
@@ -14,6 +22,10 @@ kmplot(nif, analyte, dose = NULL, group = NULL, ...)
 \item{dose}{The dose, defaults to all doses, if NULL.}
 
 \item{group}{Grouping variable.}
+
+\item{title}{The plot title, defaults to none if NULL.}
+
+\item{y_label}{The y axis label, defaults to the analyte, if NULL.}
 
 \item{...}{
   Arguments passed on to \code{\link[survminer:ggsurvplot]{survminer::ggsurvplot}}

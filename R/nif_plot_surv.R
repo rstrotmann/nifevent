@@ -35,7 +35,11 @@ make_surv_dataset <- function(nif, analyte, group = NULL) {
 #' @param nif A nif object.
 #' @param analyte The analyte.
 #' @param dose The dose, defaults to all doses, if NULL.
+#' @param title The plot title, defaults to none if NULL.
+#' @param y_label The y axis label, defaults to the analyte, if NULL.
+#' @param ... Further arguments to ggsurvplot.
 #' @param group Grouping variable.
+#'
 #' @inheritDotParams survminer::ggsurvplot risk.table pval conf.int surv.median.line
 #'
 #' @returns A ggplot object.
@@ -49,6 +53,8 @@ kmplot <- function(
     analyte,
     dose = NULL,
     group = NULL,
+    title = NULL,
+    y_label = NULL,
     ...
   ) {
   # Validate input is a NIF object
@@ -59,19 +65,6 @@ kmplot <- function(
   if (is.null(dose)) {
     dose <- unique(filter(nif, .data$EVID == 0)$DOSE)
   }
-
-  # if(is.null(group)) {
-  #   group <- 1
-  # }
-
-  # temp <- nif %>%
-  #   as.data.frame() %>%
-  #   filter(
-  #     .data$EVID == 0,
-  #     .data$ANALYTE == analyte,
-  #     .data$DOSE %in% dose
-  #   ) %>%
-  #   mutate(TIMED = .data$TAFD / 24)
 
   temp <- make_surv_dataset(
     filter(nif, .data$DOSE %in% dose),
@@ -86,8 +79,6 @@ kmplot <- function(
       mutate(group = 1)
   }
 
-
-  # sf <- survival::survfit(Surv(TIMED, DV) ~ group, data = temp)
   sf <- survival::survfit(Surv(time, status) ~ group, data = temp)
 
   if(!is.null(sf$strata)) {
@@ -96,9 +87,13 @@ kmplot <- function(
 
   p <- survminer::ggsurvplot(sf, ...)
   legend <- nif::nice_enumeration(group)
+  if(is.null(y_label)) {
+    y_label <- paste0("S[", analyte, "]")
+  }
 
   p$plot <- p$plot +
-    ggplot2::labs(fill = legend, color = legend)
+    ggplot2::labs(fill = legend, color = legend, y = y_label,
+                  title = title)
 
   if(is.null(sf$strata)) {
     p$plot <- p$plot +
