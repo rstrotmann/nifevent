@@ -1,7 +1,7 @@
 Package: nifevent
 Type: Package
 Title: Event Observations for NIF Data Sets
-Version: 0.1.0
+Version: 0.1.1
 Authors@R:
   person("Rainer", "Strotmann", email = "rainer.strotmann@mailbox.org",
     role = c("aut", "cre", "cph"),
