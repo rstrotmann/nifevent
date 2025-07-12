@@ -1,18 +1,63 @@
 #' Prepare data set for survival analysis
 #'
+#' @details
+#' The time variable is TAFD. All events with TAFD < 0 are deleted.
+#'
+#'
 #' @param nif A nif data set.
 #' @param analyte The analyte as character.
 #' @param group The grouping variable, as character.
-#'
+#' @param silent Suppress messages, as logical. Defaults to nif_option setting
+#'   if NULL.
 #' @returns A data frame.
 #' @keywords internal
 #' @noRd
-make_surv_dataset <- function(nif, analyte, group = NULL) {
-  nif %>%
+make_surv_dataset <- function(nif, analyte, group = NULL, silent = NULL) {
+  # Validate analyte parameter
+  if (is.null(analyte) || !is.character(analyte) || length(analyte) != 1) {
+    stop("analyte must be a single character string")
+  }
+
+  # Check if analyte exists in the data
+  if (!analyte %in% unique(nif$ANALYTE)) {
+    stop(paste0("No data found for analyte '", analyte, "'"))
+  }
+
+  # Filter data for the analyte
+  analyte_data <- nif %>%
     as.data.frame() %>%
-    filter(.data$TAFD >= 0) %>%
+    # filter(.data$TAFD >= 0) %>%
     filter(.data$ANALYTE == analyte) %>%
-    filter(.data$EVID == 0) %>%
+    filter(.data$EVID == 0)
+
+  # Filter data for positive TAFD
+  neg_tafd <- filter(analyte_data, .data$TAFD < 0)
+  if(nrow(neg_tafd) > 0) {
+    nif:::conditional_message(
+      nrow(neg_tafd) ,
+      plural(" row", nrow(neg_tafd) > 1),
+      " with negative TAFD removed from survival data set!",
+      silent = silent
+    )
+    analyte_data <- analyte_data %>%
+      filter(.data$TAFD >= 0)
+  }
+
+  # Check if we have any data after filtering
+  if (nrow(analyte_data) == 0) {
+    stop(paste0("No event data found for analyte '", analyte, "'"))
+  }
+
+  # Check for negative or missing TAFD values
+  if (any(analyte_data$TAFD < 0, na.rm = TRUE)) {
+    stop("Negative time values found for events")
+  }
+
+  if (any(is.na(analyte_data$TAFD))) {
+    stop("Missing time values found for events")
+  }
+
+  result <- analyte_data %>%
     mutate(TIMED = .data$TAFD/24) %>%
     group_by(.data$ID) %>%
     mutate(ev_first = min(c(.data$TIMED[.data$DV == 1], Inf))) %>%
@@ -24,6 +69,13 @@ make_surv_dataset <- function(nif, analyte, group = NULL) {
     mutate(time = min(c(.data$ev_first, .data$ev_lastobs))) %>%
     mutate(status = case_when(
       is.infinite(.data$ev_first) ~ 0, .default = 1))
+
+  # Check if we have any events
+  if (all(result$status == 0)) {
+    warning(paste0("No events found for analyte '", analyte, "'"))
+  }
+
+  return(result)
 }
 
 
@@ -55,6 +107,7 @@ kmplot <- function(
     group = NULL,
     title = NULL,
     y_label = NULL,
+    silent = NULL,
     ...
   ) {
   # Validate input is a NIF object
@@ -62,15 +115,55 @@ kmplot <- function(
     stop("Input must be a NIF object")
   }
 
-  if (is.null(dose)) {
-    dose <- unique(filter(nif, .data$EVID == 0)$DOSE)
+  # Validate analyte parameter
+  if (is.null(analyte) || !is.character(analyte) || length(analyte) != 1) {
+    stop("analyte must be a single character string")
   }
 
-  temp <- make_surv_dataset(
-    filter(nif, .data$DOSE %in% dose),
-    analyte,
-    group)
+  # Check if analyte exists in the data
+  if (!analyte %in% unique(nif$ANALYTE)) {
+    stop(paste0("No data found for analyte '", analyte, "'"))
+  }
 
+  # Handle dose filtering
+  if (is.null(dose)) {
+    dose <- unique(filter(nif, .data$EVID == 0)$DOSE)
+  } else {
+    # Validate that specified dose exists
+    available_doses <- unique(filter(nif, .data$EVID == 0)$DOSE)
+    if (!all(dose %in% available_doses)) {
+      missing_doses <- setdiff(dose, available_doses)
+      stop(paste0(
+        "No data found for specified ",
+        nif::plural("dose", length(missing_doses) > 1),
+        ": ",
+        nif::nice_enumeration(missing_doses)
+      ))
+    }
+  }
+
+  # Filter data by dose
+  filtered_nif <- filter(nif, .data$DOSE %in% dose)
+
+  # Validate group variable if provided
+  if (!is.null(group)) {
+    if (!is.character(group) || length(group) != 1) {
+      stop("group must be a single character string")
+    }
+    if (!group %in% names(filtered_nif)) {
+      stop(paste0("Group variable '", group, "' not found in data"))
+    }
+  }
+
+  # Create survival dataset
+  temp <- make_surv_dataset(filtered_nif, analyte, group, silent = silent)
+
+  # Check if we have any data for analysis
+  if (nrow(temp) == 0) {
+    stop("No data available for analysis")
+  }
+
+  # Handle grouping
   if(!is.null(group) & all(group %in% names(temp))) {
     temp <- temp %>%
       tidyr::unite(group, all_of(group))
@@ -79,14 +172,21 @@ kmplot <- function(
       mutate(group = 1)
   }
 
+  # Create survival fit
   sf <- survival::survfit(Surv(time, status) ~ group, data = temp)
+
+  # Store the data in the survival fit object for survminer
+  sf$data <- temp
 
   if(!is.null(sf$strata)) {
     names(sf$strata) <- gsub("group=", "", names(sf$strata))
   }
 
-  p <- survminer::ggsurvplot(sf, ...)
-  legend <- nif::nice_enumeration(group)
+  # Create plot
+  p <- survminer::ggsurvplot(sf, data = temp, ...)
+
+  # Handle legend and labels
+  legend <- if (!is.null(group)) nif::nice_enumeration(group) else NULL
   if(is.null(y_label)) {
     y_label <- paste0("S[", analyte, "]")
   }
