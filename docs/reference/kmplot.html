@@ -49,8 +49,10 @@
 <span>  <span class="va">analyte</span>,</span>
 <span>  dose <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  convert_tafd_h_to_d <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  title <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  y_label <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  silent <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -75,12 +77,22 @@
 <dd><p>Grouping variable.</p></dd>
 
 
+<dt id="arg-convert-tafd-h-to-d">convert_tafd_h_to_d<a class="anchor" aria-label="anchor" href="#arg-convert-tafd-h-to-d"></a></dt>
+<dd><p>Convert the TAFD field from hours to days,
+defaults to TRUE.</p></dd>
+
+
 <dt id="arg-title">title<a class="anchor" aria-label="anchor" href="#arg-title"></a></dt>
 <dd><p>The plot title, defaults to none if NULL.</p></dd>
 
 
 <dt id="arg-y-label">y_label<a class="anchor" aria-label="anchor" href="#arg-y-label"></a></dt>
 <dd><p>The y axis label, defaults to the analyte, if NULL.</p></dd>
+
+
+<dt id="arg-silent">silent<a class="anchor" aria-label="anchor" href="#arg-silent"></a></dt>
+<dd><p>Suppress messages, as logical. Defaults to nif_option setting
+if NULL.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
