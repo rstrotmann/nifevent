@@ -9,8 +9,10 @@ kmplot(
   analyte,
   dose = NULL,
   group = NULL,
+  convert_tafd_h_to_d = TRUE,
   title = NULL,
   y_label = NULL,
+  silent = NULL,
   ...
 )
 }
@@ -23,9 +25,15 @@ kmplot(
 
 \item{group}{Grouping variable.}
 
+\item{convert_tafd_h_to_d}{Convert the TAFD field from hours to days,
+defaults to TRUE.}
+
 \item{title}{The plot title, defaults to none if NULL.}
 
 \item{y_label}{The y axis label, defaults to the analyte, if NULL.}
+
+\item{silent}{Suppress messages, as logical. Defaults to nif_option setting
+if NULL.}
 
 \item{...}{
   Arguments passed on to \code{\link[survminer:ggsurvplot]{survminer::ggsurvplot}}

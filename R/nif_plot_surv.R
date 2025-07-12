@@ -9,10 +9,17 @@
 #' @param group The grouping variable, as character.
 #' @param silent Suppress messages, as logical. Defaults to nif_option setting
 #'   if NULL.
+#' @param convert_tafd_h_to_d Convert the TAFD field from hours to days,
+#'   defaults to TRUE.
 #' @returns A data frame.
 #' @keywords internal
 #' @noRd
-make_surv_dataset <- function(nif, analyte, group = NULL, silent = NULL) {
+make_surv_dataset <- function(
+    nif,
+    analyte,
+    group = NULL,
+    convert_tafd_h_to_d = TRUE,
+    silent = NULL) {
   # Validate analyte parameter
   if (is.null(analyte) || !is.character(analyte) || length(analyte) != 1) {
     stop("analyte must be a single character string")
@@ -49,16 +56,17 @@ make_surv_dataset <- function(nif, analyte, group = NULL, silent = NULL) {
   }
 
   # Check for negative or missing TAFD values
-  if (any(analyte_data$TAFD < 0, na.rm = TRUE)) {
-    stop("Negative time values found for events")
-  }
+  # if (any(analyte_data$TAFD < 0, na.rm = TRUE)) {
+  #   stop("Negative time values found for events")
+  # }
 
   if (any(is.na(analyte_data$TAFD))) {
     stop("Missing time values found for events")
   }
 
   result <- analyte_data %>%
-    mutate(TIMED = .data$TAFD/24) %>%
+    {if(convert_tafd_h_to_d == TRUE)
+      mutate(., TIMED = .data$TAFD/24) else .} %>%
     group_by(.data$ID) %>%
     mutate(ev_first = min(c(.data$TIMED[.data$DV == 1], Inf))) %>%
     mutate(ev_lastobs = max(.data$TIMED)) %>%
@@ -91,6 +99,10 @@ make_surv_dataset <- function(nif, analyte, group = NULL, silent = NULL) {
 #' @param y_label The y axis label, defaults to the analyte, if NULL.
 #' @param ... Further arguments to ggsurvplot.
 #' @param group Grouping variable.
+#' @param silent Suppress messages, as logical. Defaults to nif_option setting
+#'   if NULL.
+#' @param convert_tafd_h_to_d Convert the TAFD field from hours to days,
+#'   defaults to TRUE.
 #'
 #' @inheritDotParams survminer::ggsurvplot risk.table pval conf.int surv.median.line
 #'
@@ -105,6 +117,7 @@ kmplot <- function(
     analyte,
     dose = NULL,
     group = NULL,
+    convert_tafd_h_to_d = TRUE,
     title = NULL,
     y_label = NULL,
     silent = NULL,
@@ -147,8 +160,9 @@ kmplot <- function(
 
   # Validate group variable if provided
   if (!is.null(group)) {
-    if (!is.character(group) || length(group) != 1) {
-      stop("group must be a single character string")
+    # if (!is.character(group) || length(group) != 1) {
+    if (!is.character(group)) {
+      stop("group must be a character string")
     }
     if (!group %in% names(filtered_nif)) {
       stop(paste0("Group variable '", group, "' not found in data"))
@@ -156,7 +170,12 @@ kmplot <- function(
   }
 
   # Create survival dataset
-  temp <- make_surv_dataset(filtered_nif, analyte, group, silent = silent)
+  temp <- make_surv_dataset(
+    nif = filtered_nif,
+    analyte = analyte,
+    group = group,
+    convert_tafd_h_to_d = convert_tafd_h_to_d,
+    silent = silent)
 
   # Check if we have any data for analysis
   if (nrow(temp) == 0) {
