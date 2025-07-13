@@ -120,7 +120,7 @@ test_that("kmplot handles grouping correctly", {
       analyte = "EV_HEADACHE",
       group = "NONEXISTENT_GROUP"
     ),
-    "Group variable 'NONEXISTENT_GROUP' not found in data"
+    "Grouping variable NONEXISTENT_GROUP not found in nif data set"
   )
 
   # Test with valid group variable

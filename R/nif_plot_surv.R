@@ -18,7 +18,6 @@
 #' @import dplyr
 #' @importFrom nif plural
 #' @importFrom nif nice_enumeration
-#' @importFrom nif conditional_message
 #' @keywords internal
 #' @noRd
 make_surv_dataset <- function(
@@ -76,7 +75,7 @@ make_surv_dataset <- function(
     stop("DV for the analyte must be either 0 or 1, or FALSE or TRUE")
 
   analyte_data <- analyte_data %>%
-    mutate(DV = as.numeric(DV))
+    mutate(DV = as.numeric(.data$DV))
 
   # Filter data for positive TAFD
   neg_tafd <- filter(analyte_data, .data$TAFD < 0)
@@ -166,15 +165,13 @@ kmplot <- function(
   ) {
   # Validate convert_tafd_h_to_d is logical
   validate_logical_param(convert_tafd_h_to_d, "convert_tafd_h_to_d")
-
-  # Validate silent parameter is logical or NULL
-  # validate_slv(silent, "silent", allow_null = TRUE)
   validate_logical_param(silent, "silent", allow_null = TRUE)
 
   # Validate analyte, title, y_label
   validate_char_param(analyte, "analyte")
   validate_char_param(title, "title", allow_null = TRUE)
   validate_char_param(y_label, "y_label", allow_null = TRUE)
+  validate_char_param(group, "group", allow_multiple = TRUE, allow_null = TRUE)
 
   # Validate input is a NIF object
   if (!inherits(nif, "nif")) {
@@ -205,17 +202,6 @@ kmplot <- function(
 
   # Filter data by dose
   filtered_nif <- filter(nif, .data$DOSE %in% dose)
-
-  # Validate group variable if provided
-  if (!is.null(group)) {
-    # if (!is.character(group) || length(group) != 1) {
-    if (!is.character(group)) {
-      stop("group must be a character string")
-    }
-    if (!group %in% names(filtered_nif)) {
-      stop(paste0("Group variable '", group, "' not found in data"))
-    }
-  }
 
   # Create survival dataset
   temp <- make_surv_dataset(
