@@ -20,6 +20,11 @@ make_surv_dataset <- function(
     group = NULL,
     convert_tafd_h_to_d = TRUE,
     silent = NULL) {
+  # Validate convert_tafd_h_to_d parameter
+  if(!is.logical(convert_tafd_h_to_d) || length(convert_tafd_h_to_d) != 1) {
+    stop("convert_tafd_h_to_d must be a single logical value")
+  }
+
   # Validate analyte parameter
   if (is.null(analyte) || !is.character(analyte) || length(analyte) != 1) {
     stop("analyte must be a single character string")
@@ -66,7 +71,8 @@ make_surv_dataset <- function(
 
   result <- analyte_data %>%
     {if(convert_tafd_h_to_d == TRUE)
-      mutate(., TIMED = .data$TAFD/24) else .} %>%
+      mutate(., TIMED = .data$TAFD/24) else
+        mutate(., TIMED = .data$TAFD)} %>%
     group_by(.data$ID) %>%
     mutate(ev_first = min(c(.data$TIMED[.data$DV == 1], Inf))) %>%
     mutate(ev_lastobs = max(.data$TIMED)) %>%
@@ -123,15 +129,26 @@ kmplot <- function(
     silent = NULL,
     ...
   ) {
+  # Validate convert_tafd_h_to_d is logical
+  validate_slv(convert_tafd_h_to_d, "convert_tafd_h_to_d")
+
+  # Validate silent parameter is logical or NULL
+  validate_slv(silent, "silent", allow_null = TRUE)
+
+  # Validate analyte, title, y_label
+  validate_scv(analyte, "analyte")
+  validate_scv(title, "title", allow_null = TRUE)
+  validate_scv(y_label, "y_label", allow_null = TRUE)
+
   # Validate input is a NIF object
   if (!inherits(nif, "nif")) {
     stop("Input must be a NIF object")
   }
 
-  # Validate analyte parameter
-  if (is.null(analyte) || !is.character(analyte) || length(analyte) != 1) {
-    stop("analyte must be a single character string")
-  }
+  # # Validate analyte parameter
+  # if (is.null(analyte) || !is.character(analyte) || length(analyte) != 1) {
+  #   stop("analyte must be a single character string")
+  # }
 
   # Check if analyte exists in the data
   if (!analyte %in% unique(nif$ANALYTE)) {

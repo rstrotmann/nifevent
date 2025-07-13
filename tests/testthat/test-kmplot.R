@@ -22,7 +22,6 @@ create_mock_nif_with_events <- function() {
     nif::new_nif()
 }
 
-
 test_that("kmplot validates input parameters correctly", {
   # Create mock data
   mock_nif <- create_mock_nif_with_events()
@@ -55,7 +54,6 @@ test_that("kmplot validates input parameters correctly", {
   )
 })
 
-
 test_that("kmplot handles empty data sets", {
   # Create empty nif object
   empty_nif <- create_mock_nif_with_events()[0, ]
@@ -70,11 +68,9 @@ test_that("kmplot handles empty data sets", {
     "No data found for analyte 'EV_HEADACHE'"
   )
 
-
   # Test with nif that has no events for the analyte
   no_events_nif <- create_mock_nif_with_events() %>%
     filter(ANALYTE != "EV_HEADACHE")
-
 
   expect_error(
     kmplot(
@@ -84,7 +80,6 @@ test_that("kmplot handles empty data sets", {
     "No data found for analyte 'EV_HEADACHE'"
   )
 })
-
 
 test_that("kmplot handles dose filtering correctly", {
   mock_nif <- create_mock_nif_with_events()
@@ -115,7 +110,6 @@ test_that("kmplot handles dose filtering correctly", {
   )
 })
 
-
 test_that("kmplot handles grouping correctly", {
   mock_nif <- create_mock_nif_with_events()
 
@@ -138,7 +132,6 @@ test_that("kmplot handles grouping correctly", {
     )
   )
 })
-
 
 test_that("kmplot handles edge cases in survival data", {
   mock_nif <- create_mock_nif_with_events()
@@ -166,7 +159,6 @@ test_that("kmplot handles edge cases in survival data", {
     )
   )
 })
-
 
 test_that("kmplot handles time calculations correctly", {
   mock_nif <- create_mock_nif_with_events()
@@ -198,6 +190,108 @@ test_that("kmplot handles time calculations correctly", {
   )
 })
 
+test_that("kmplot validates additional parameters", {
+  mock_nif <- create_mock_nif_with_events()
+
+  # Test convert_tafd_h_to_d parameter validation
+  expect_error(
+    kmplot(
+      nif = mock_nif,
+      analyte = "EV_HEADACHE",
+      convert_tafd_h_to_d = "not_logical"
+    ),
+    "convert_tafd_h_to_d must be a single logical value"
+  )
+
+  # Test silent parameter validation
+  expect_error(
+    kmplot(
+      nif = mock_nif,
+      analyte = "EV_HEADACHE",
+      silent = "not_logical"
+    ),
+    "silent must be a single logical value"
+  )
+
+  # Test title parameter validation
+  expect_error(
+    kmplot(
+      nif = mock_nif,
+      analyte = "EV_HEADACHE",
+      title = 123
+    ),
+    "title must be a single character string"
+  )
+
+  # Test y_label parameter validation
+  expect_error(
+    kmplot(
+      nif = mock_nif,
+      analyte = "EV_HEADACHE",
+      y_label = 123
+    ),
+    "y_label must be a single character string"
+  )
+})
+
+test_that("kmplot handles convert_tafd_h_to_d parameter correctly", {
+  mock_nif <- create_mock_nif_with_events()
+
+  # Test with convert_tafd_h_to_d = TRUE (default)
+  result1 <- kmplot(
+    nif = mock_nif,
+    analyte = "EV_HEADACHE",
+    convert_tafd_h_to_d = TRUE
+  )
+  expect_true(inherits(result1, "ggsurv"))
+
+  # Test with convert_tafd_h_to_d = FALSE
+  result2 <- kmplot(
+    nif = mock_nif,
+    analyte = "EV_HEADACHE",
+    convert_tafd_h_to_d = FALSE
+  )
+  expect_true(inherits(result2, "ggsurv"))
+})
+
+test_that("kmplot handles edge cases with survival analysis", {
+  mock_nif <- create_mock_nif_with_events()
+
+  # Test with single subject
+  single_subject_nif <- mock_nif %>%
+    filter(USUBJID == "001")
+
+  expect_silent(
+    kmplot(
+      nif = single_subject_nif,
+      analyte = "EV_HEADACHE"
+    )
+  )
+
+  # Test with all subjects having same event time
+  same_time_nif <- mock_nif %>%
+    mutate(TAFD = ifelse(ANALYTE == "EV_HEADACHE", 6, TAFD))
+
+  expect_silent(
+    kmplot(
+      nif = same_time_nif,
+      analyte = "EV_HEADACHE"
+    )
+  )
+})
+
+test_that("kmplot handles survminer parameters correctly", {
+  mock_nif <- create_mock_nif_with_events()
+
+  # Test with risk table
+  expect_silent(
+    kmplot(
+      nif = mock_nif,
+      analyte = "EV_HEADACHE",
+      risk.table = TRUE
+    )
+  )
+})
 
 test_that("kmplot returns correct object structure", {
   mock_nif <- create_mock_nif_with_events()
@@ -212,7 +306,6 @@ test_that("kmplot returns correct object structure", {
   expect_true(inherits(result, "ggsurv"))
   expect_true(inherits(result, "list"))
 })
-
 
 test_that("kmplot handles legend and labels correctly", {
   mock_nif <- create_mock_nif_with_events()
@@ -236,4 +329,36 @@ test_that("kmplot handles legend and labels correctly", {
   )
 
   expect_true(inherits(result2, "ggsurv"))
+})
+
+test_that("kmplot handles data with only one group", {
+  mock_nif <- create_mock_nif_with_events()
+
+  # Test with grouping but only one group value
+  single_group_nif <- mock_nif %>%
+    mutate(SEX = 1)  # All subjects have same group
+
+  expect_silent(
+    kmplot(
+      nif = single_group_nif,
+      analyte = "EV_HEADACHE",
+      group = "SEX"
+    )
+  )
+})
+
+test_that("kmplot handles data with missing values in group variable", {
+  mock_nif <- create_mock_nif_with_events()
+
+  # Test with missing values in group variable
+  missing_group_nif <- mock_nif %>%
+    mutate(SEX = ifelse(USUBJID == "001", NA, SEX))
+
+  expect_silent(
+    kmplot(
+      nif = missing_group_nif,
+      analyte = "EV_HEADACHE",
+      group = "SEX"
+    )
+  )
 })
