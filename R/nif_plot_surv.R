@@ -3,6 +3,9 @@
 #' @details
 #' The time variable is TAFD. All events with TAFD < 0 are deleted.
 #'
+#' For the 'analyte' analyte, the data set must contain a DV that only contains
+#' 0 and 1 or FALSE and TRUE. DV must not contain NA values.
+#'
 #'
 #' @param nif A nif data set.
 #' @param analyte The analyte as character.
@@ -12,6 +15,10 @@
 #' @param convert_tafd_h_to_d Convert the TAFD field from hours to days,
 #'   defaults to TRUE.
 #' @returns A data frame.
+#' @import dplyr
+#' @importFrom nif plural
+#' @importFrom nif nice_enumeration
+#' @importFrom nif conditional_message
 #' @keywords internal
 #' @noRd
 make_surv_dataset <- function(
@@ -20,14 +27,24 @@ make_surv_dataset <- function(
     group = NULL,
     convert_tafd_h_to_d = TRUE,
     silent = NULL) {
-  # Validate convert_tafd_h_to_d parameter
-  if(!is.logical(convert_tafd_h_to_d) || length(convert_tafd_h_to_d) != 1) {
-    stop("convert_tafd_h_to_d must be a single logical value")
+  # Validate nif parameter
+  if (!inherits(nif, "nif")) {
+    stop("nif must be a nif object")
   }
 
-  # Validate analyte parameter
-  if (is.null(analyte) || !is.character(analyte) || length(analyte) != 1) {
-    stop("analyte must be a single character string")
+  # validate other parameters
+  validate_char_param(analyte, "analyte")
+  validate_char_param(group, "group", allow_null = TRUE, allow_multiple = TRUE)
+  validate_logical_param(convert_tafd_h_to_d, "convert_tafd_h_to_d")
+  validate_logical_param(silent, "silent", allow_null = TRUE)
+
+  # Check for required columns
+  required_cols <- c("ANALYTE", "EVID", "DV", "TAFD", "ID")
+  missing_cols <- setdiff(required_cols, names(nif))
+  if(length(missing_cols) > 0) {
+    stop(paste0(
+      "Required ", plural("column", length(missing_cols) > 1), " ",
+      nice_enumeration(missing_cols), " not found in nif data set"))
   }
 
   # Check if analyte exists in the data
@@ -35,12 +52,31 @@ make_surv_dataset <- function(
     stop(paste0("No data found for analyte '", analyte, "'"))
   }
 
+  # Check if the group fields exists in the data
+  if(!is.null(group)){
+    missing_group <- setdiff(group, unique(names(nif)))
+    if(length(missing_group) > 0) {
+      stop(paste0(
+        "Grouping ", plural("variable", length(missing_group) > 1), " ",
+        nice_enumeration(missing_group), " not found in nif data set"))
+    }
+  }
+
   # Filter data for the analyte
   analyte_data <- nif %>%
-    as.data.frame() %>%
-    # filter(.data$TAFD >= 0) %>%
     filter(.data$ANALYTE == analyte) %>%
     filter(.data$EVID == 0)
+
+  # Make sure DV has only 0 or 1, or FALSE or TRUE, but no NA values
+  if(any(is.na(analyte_data$DV))) {
+    stop("DV for the analyte cannot contain NA values")
+  }
+
+  if(!all(unique(analyte_data$DV) %in% c(0, 1, FALSE, TRUE)))
+    stop("DV for the analyte must be either 0 or 1, or FALSE or TRUE")
+
+  analyte_data <- analyte_data %>%
+    mutate(DV = as.numeric(DV))
 
   # Filter data for positive TAFD
   neg_tafd <- filter(analyte_data, .data$TAFD < 0)
@@ -60,11 +96,6 @@ make_surv_dataset <- function(
     stop(paste0("No event data found for analyte '", analyte, "'"))
   }
 
-  # Check for negative or missing TAFD values
-  # if (any(analyte_data$TAFD < 0, na.rm = TRUE)) {
-  #   stop("Negative time values found for events")
-  # }
-
   if (any(is.na(analyte_data$TAFD))) {
     stop("Missing time values found for events")
   }
@@ -74,13 +105,17 @@ make_surv_dataset <- function(
       mutate(., TIMED = .data$TAFD/24) else
         mutate(., TIMED = .data$TAFD)} %>%
     group_by(.data$ID) %>%
-    mutate(ev_first = min(c(.data$TIMED[.data$DV == 1], Inf))) %>%
+    mutate(ev_first = min(c(.data$TIMED[.data$DV == 1], Inf), na.rm = TRUE)) %>%
     mutate(ev_lastobs = max(.data$TIMED)) %>%
     ungroup() %>%
-    select("ID", any_of(c(group)), "ev_first", "ev_lastobs") %>%
+    {if(is.null(group)) {
+      select(., "ID", "ev_first", "ev_lastobs")
+    } else {
+      select(., "ID", any_of(group), "ev_first", "ev_lastobs")
+    }} %>%
     distinct() %>%
     rowwise() %>%
-    mutate(time = min(c(.data$ev_first, .data$ev_lastobs))) %>%
+    mutate(time = min(c(.data$ev_first, .data$ev_lastobs), na.rm = TRUE)) %>%
     mutate(status = case_when(
       is.infinite(.data$ev_first) ~ 0, .default = 1))
 
@@ -130,25 +165,21 @@ kmplot <- function(
     ...
   ) {
   # Validate convert_tafd_h_to_d is logical
-  validate_slv(convert_tafd_h_to_d, "convert_tafd_h_to_d")
+  validate_logical_param(convert_tafd_h_to_d, "convert_tafd_h_to_d")
 
   # Validate silent parameter is logical or NULL
-  validate_slv(silent, "silent", allow_null = TRUE)
+  # validate_slv(silent, "silent", allow_null = TRUE)
+  validate_logical_param(silent, "silent", allow_null = TRUE)
 
   # Validate analyte, title, y_label
-  validate_scv(analyte, "analyte")
-  validate_scv(title, "title", allow_null = TRUE)
-  validate_scv(y_label, "y_label", allow_null = TRUE)
+  validate_char_param(analyte, "analyte")
+  validate_char_param(title, "title", allow_null = TRUE)
+  validate_char_param(y_label, "y_label", allow_null = TRUE)
 
   # Validate input is a NIF object
   if (!inherits(nif, "nif")) {
     stop("Input must be a NIF object")
   }
-
-  # # Validate analyte parameter
-  # if (is.null(analyte) || !is.character(analyte) || length(analyte) != 1) {
-  #   stop("analyte must be a single character string")
-  # }
 
   # Check if analyte exists in the data
   if (!analyte %in% unique(nif$ANALYTE)) {

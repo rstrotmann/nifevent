@@ -1,37 +1,57 @@
+# Helper function to validate character string parameters
+validate_char_param <- function(
+    param,
+    param_name,
+    allow_null = FALSE,
+    allow_empty = FALSE,
+    allow_multiple = FALSE) {
+  if(any(is.na(param))) {
+    stop(paste0(param_name, " must not contain NA"))
+  }
 
-#' Validate single logical value
-#'
-#' @param x The test value.
-#' @param label A label, e.g., the variable name for x.
-#' @param allow_null Allow x to be NULL, as logical.
-#'
-#' @returns Nothing.
-validate_slv <- function(x, label = NULL, allow_null = FALSE) {
-  if(is.null(label)) {
-    label <- as.character(x)
+  if (allow_null && is.null(param)) {
+    return(invisible(NULL))
   }
-  if(!is.logical(x) || length(x) != 1) {
-    if(!(allow_null = TRUE & is.null(x)))
-      stop(paste0(label, " must be a single logical value"))
+
+  if(
+    is.null(param) ||
+    !is.character(param) ||
+    (length(param) != 1 && !allow_multiple)) {
+    stop(paste0(param_name, " must be a single character string"))
   }
+
+  if (!allow_empty && all(nchar(param) == 0)) {
+    stop(paste0(param_name, " must be a non-empty character string"))
+  }
+
+  return(invisible(NULL))
 }
 
 
-#' Validate single character value
-#'
-#' @param x The test value.
-#' @param label A label, defaults to the value of x.
-#' @param allow_null Allow x to be NULL, as logical.
-#'
-#' @returns Nothing.
-validate_scv <- function(x, label = NULL, allow_null = FALSE) {
-  if(is.null(label)) {
-    label <- as.character(x)
+# Helper function to validate logical parameters
+validate_logical_param <- function(
+    param,
+    param_name,
+    allow_null = FALSE,
+    allow_multiple = FALSE) {
+  if(any(is.na(param))) {
+    stop(paste0(param_name, " must not contain NA"))
   }
-  if(allow_null == TRUE & is.null(x)){
-    return()
+
+  if (allow_null && is.null(param)) {
+    return(invisible(NULL))
   }
-  if(!is.character(x) || length(x) != 1) {
-    stop(paste0(label, " must be a single character string"))
+
+  if(
+    is.null(param) ||
+    !is.logical(param) ||
+    (length(param) != 1 && !allow_multiple)) {
+    stop(paste0(param_name, " must be a single logical value"))
   }
+
+  return(invisible(NULL))
 }
+
+
+
+
