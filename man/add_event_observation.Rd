@@ -15,7 +15,7 @@ add_event_observation(
   parent = NULL,
   metabolite = FALSE,
   cmt = NULL,
-  subject_filter = "!ACTARMCD \%in\% c('SCREENFAIL', 'NOTTRT')",
+  subject_filter = "!ACTARMCD \%in\% c('SCRNFAIL', 'SCREENFAIL', 'NOTTRT')",
   observation_filter = "TRUE",
   DTC_field = NULL,
   keep = NULL,

@@ -1,33 +1,3 @@
-# # Helper function to validate character string parameters
-# validate_char_param <- function(
-#     param,
-#     param_name,
-#     allow_null = FALSE,
-#     allow_empty = FALSE,
-#     allow_multiple = FALSE) {
-#   if(any(is.na(param))) {
-#     stop(paste0(param_name, " must not contain NA"))
-#   }
-#
-#   if (allow_null && is.null(param)) {
-#     return(invisible(NULL))
-#   }
-#
-#   if(
-#     is.null(param) ||
-#     !is.character(param) ||
-#     (length(param) != 1 && !allow_multiple)) {
-#     stop(paste0(param_name, " must be a single character string"))
-#   }
-#
-#   if (!allow_empty && all(nchar(param) == 0)) {
-#     stop(paste0(param_name, " must be a non-empty character string"))
-#   }
-#
-#   return(invisible(NULL))
-# }
-
-
 #' Make event observation
 #'
 #' @param sdtm A sdtm object.
@@ -72,8 +42,8 @@ make_event <- function(
     analyte = NULL,
     parent = NULL,
     metabolite = FALSE,
-    cmt = NA,
-    subject_filter = "!ACTARMCD %in% c('SCRNFAIL', 'NOTTRT')",
+    cmt = NULL,
+    subject_filter = "!ACTARMCD %in% c('SCRNFAIL', 'SCREENFAIL', 'NOTTRT')",
     observation_filter = "TRUE",
     DTC_field = NULL,
     keep = NULL,
@@ -83,44 +53,24 @@ make_event <- function(
     stop("sdtm must be an sdtm object")
   }
 
-  # Validate character parameters
-  # if(is.null(analyte) && is.null(testcd)) {
-  #   stop("If testcd is null, analyte must be specified!")
-  # }
+  if(is.null(analyte) && is.null(testcd)) {
+    stop("analyte and testcd cannot be both NULL!")
+  }
+
+  # Validate other parameters
   validate_char_param(domain, "domain")
   validate_char_param(testcd, "testcd", allow_null = TRUE)
   validate_char_param(event_filter, "event_filter")
+  validate_logical_param(event_diff, "event_diff")
   validate_char_param(analyte, "analyte", allow_null = TRUE)
   validate_char_param(parent, "parent", allow_null = TRUE)
+  validate_logical_param(metabolite, "metabolite")
+  validate_numeric_param(cmt, "cmt", allow_null = TRUE)
   validate_char_param(subject_filter, "subject_filter", allow_null = TRUE)
   validate_char_param(observation_filter, "observation_filter", allow_null = TRUE)
   validate_char_param(DTC_field, "DTC_field", allow_null = TRUE)
   validate_char_param(keep, "keep", allow_null = TRUE, allow_multiple = TRUE)
-
-
-  # Validate event_diff parameter
-  if (!is.logical(event_diff) || length(event_diff) != 1) {
-    stop("event_diff must be a single logical value")
-  }
-
-  # Validate metabolite parameter
-  if (!is.logical(metabolite) || length(metabolite) != 1) {
-    stop("metabolite must be a single logical value")
-  }
-
-  # Validate cmt parameter
-  if (!is.null(cmt) && !is.na(cmt)) {
-    if (!is.numeric(cmt) || length(cmt) != 1) {
-      stop("cmt must be a single numeric value when provided")
-    }
-  }
-
-  # Validate silent parameter
-  if (!is.null(silent)) {
-    if (!is.logical(silent) || length(silent) != 1) {
-      stop("silent must be a single logical value when provided")
-    }
-  }
+  validate_logical_param(silent, "silent", allow_null = TRUE)
 
   if(is.null(analyte) && is.null(testcd)) {
     stop("analyte and testcd cannot be both NULL!")
@@ -157,7 +107,7 @@ make_event <- function(
 
   # check and apply observation filter
   if(!nif:::is_valid_filter(obj, observation_filter))
-    stop(paste0("observation filter '", observation_filter, "' is invalid!"))
+    stop(paste0("observation filter '", observation_filter, "' is not valid"))
 
   filtered_obj <- obj %>%
     mutate(SRC_DOMAIN = .data$DOMAIN) %>%
@@ -185,7 +135,7 @@ make_event <- function(
 
   # check and apply event filter
   if(!nif:::is_valid_filter(filtered_obj, event_filter))
-    stop(paste0("event filter '", event_filter, "' is not a valid filter!"))
+    stop(paste0("event filter '", event_filter, "' is not valid"))
 
   # flag marks the event condition, dflag marks a change in the event condition
   # ev_flag marks the attainment of the condition
@@ -257,9 +207,8 @@ add_event_observation <- function(
     parent = NULL,
     metabolite = FALSE,
     cmt = NULL,
-    subject_filter = "!ACTARMCD %in% c('SCREENFAIL', 'NOTTRT')",
+    subject_filter = "!ACTARMCD %in% c('SCRNFAIL', 'SCREENFAIL', 'NOTTRT')",
     observation_filter = "TRUE",
-    # TESTCD_field = NULL,
     DTC_field = NULL,
     keep = NULL,
     debug = FALSE,
@@ -278,15 +227,21 @@ add_event_observation <- function(
     stop("analyte and testcd cannot be both NULL!")
   }
 
-  # Validate metabolite parameter
-  if (!is.logical(metabolite) || length(metabolite) != 1) {
-    stop("metabolite must be a single logical value")
-  }
-
-  # Validate debug parameter
-  if (!is.logical(debug) || length(debug) != 1) {
-    stop("debug must be a single logical value")
-  }
+  # Validate other parameters
+  validate_char_param(domain, "domain")
+  validate_char_param(testcd, "testcd", allow_null = TRUE)
+  validate_char_param(event_filter, "event_filter")
+  validate_logical_param(event_diff, "event_diff")
+  validate_char_param(analyte, "analyte", allow_null = TRUE)
+  validate_char_param(parent, "parent", allow_null = TRUE)
+  validate_logical_param(metabolite, "metabolite")
+  validate_numeric_param(cmt, "cmt", allow_null = TRUE)
+  validate_char_param(subject_filter, "subject_filter", allow_null = TRUE)
+  validate_char_param(observation_filter, "observation_filter", allow_null = TRUE)
+  validate_char_param(DTC_field, "DTC_field", allow_null = TRUE)
+  validate_char_param(keep, "keep", allow_null = TRUE, allow_multiple = TRUE)
+  validate_logical_param(debug, "debug")
+  validate_logical_param(silent, "silent", allow_null = TRUE)
 
   debug = isTRUE(debug) | isTRUE(nif:::nif_option_value("debug"))
   if(isTRUE(debug))
