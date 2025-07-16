@@ -156,11 +156,13 @@ make_event <- function(
   }
 
   out <- temp %>%
+    filter(.data$flag == 1) %>%
     mutate(DTC = .data[[DTC_field]]) %>%
     inner_join(sbs, by = "USUBJID") %>%
     group_by(.data$USUBJID) %>%
     mutate(TRTDY = as.numeric(
-      difftime(lubridate::date(.data$DTC), lubridate::date(nif::safe_min(.data$RFSTDTC))),
+      difftime(lubridate::date(.data$DTC),
+               lubridate::date(nif::safe_min(.data$RFSTDTC))),
       units = "days") + 1) %>%
     ungroup() %>%
     filter(!is.na(.data$DTC)) %>%
