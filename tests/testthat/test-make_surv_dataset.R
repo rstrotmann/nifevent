@@ -282,7 +282,7 @@ test_that("make_surv_dataset returns correct output structure", {
 
   # Check output structure
   expect_true(is.data.frame(result1))
-  expect_equal(names(result1), c("ID", "ev_first", "ev_lastobs", "time", "status"))
+  expect_equal(names(result1), c("ID", "time", "status"))
   expect_true(all(c("time", "status") %in% names(result1)))
 
   # Test with grouping
@@ -294,7 +294,7 @@ test_that("make_surv_dataset returns correct output structure", {
 
   # Check output structure with grouping
   expect_true(is.data.frame(result2))
-  expect_true(all(c("ID", "SEX", "ev_first", "ev_lastobs", "time", "status") %in% names(result2)))
+  expect_true(all(c("ID", "SEX", "time", "status") %in% names(result2)))
 })
 
 test_that("make_surv_dataset calculates survival data correctly", {
@@ -326,19 +326,21 @@ test_that("make_surv_dataset handles no events correctly", {
   no_events_nif <- mock_nif %>%
     mutate(DV = ifelse(ANALYTE == "EV_HEADACHE", 0, DV))
 
-  expect_warning(
+  expect_message(
     result <- make_surv_dataset(
       nif = no_events_nif,
-      analyte = "EV_HEADACHE"
+      analyte = "EV_HEADACHE",
+      silent = FALSE
     ),
     "No events found for analyte 'EV_HEADACHE'"
   )
 
   # Should still return data but with warning
-  expect_warning(
+  expect_message(
     make_surv_dataset(
       nif = no_events_nif,
-      analyte = "EV_HEADACHE"
+      analyte = "EV_HEADACHE",
+      silent = FALSE
     ),
     "No events found for analyte 'EV_HEADACHE'"
   )
@@ -375,7 +377,7 @@ test_that("make_surv_dataset handles multiple group variables", {
 
   # Check that all group variables are included in output
   expect_true(all(c("SEX", "AGE_GROUP") %in% names(result)))
-  expect_true(all(c("ID", "SEX", "AGE_GROUP", "ev_first", "ev_lastobs", "time", "status") %in% names(result)))
+  expect_true(all(c("ID", "SEX", "AGE_GROUP", "time", "status") %in% names(result)))
 })
 
 test_that("make_surv_dataset handles edge cases", {
@@ -429,3 +431,4 @@ test_that("make_surv_dataset handles silent parameter correctly", {
     "2 rows with negative TAFD removed from survival data set!"
   )
 })
+
