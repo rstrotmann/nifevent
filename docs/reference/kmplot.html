@@ -48,8 +48,7 @@
 <span>  show_censoring <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  show_risk_table <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  show_ci <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  silent <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">...</span></span>
+<span>  silent <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -102,41 +101,10 @@ defaults to TRUE.</p></dd>
 <dd><p>Suppress messages, as logical. Defaults to nif_option setting
 if NULL.</p></dd>
 
-
-<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Arguments passed on to <code><a href="https://rdrr.io/pkg/survminer/man/ggsurvplot.html" class="external-link">survminer::ggsurvplot</a></code></p><dl><dt><code>conf.int</code></dt>
-<dd><p>logical value. If TRUE, plots confidence interval.</p></dd>
-
-    <dt><code>pval</code></dt>
-<dd><p>logical value, a numeric or a string. If logical and TRUE, the
-p-value is added on the plot. If numeric, than the computet p-value is
-substituted with the one passed with this parameter. If character, then the
-customized string appears on the plot. See examples - Example 3.</p></dd>
-
-    <dt><code>surv.median.line</code></dt>
-<dd><p>character vector for drawing a horizontal/vertical
-line at median survival. Allowed values include one of c("none", "hv", "h",
-"v"). v: vertical, h:horizontal.</p></dd>
-
-    <dt><code>risk.table</code></dt>
-<dd><p>Allowed values include:</p><ul><li><p>TRUE or FALSE
-specifying whether to show or not the risk table. Default is FALSE.</p></li>
-<li><p>"absolute" or "percentage". Shows the <b>absolute number</b> and the
-<b>percentage</b> of subjects at risk by time, respectively.</p></li>
-<li><p>"abs_pct"
-to show both absolute number and percentage.</p></li>
-<li><p>"nrisk_cumcensor" and
-"nrisk_cumevents". Show the number at risk and, the cumulative number of
-censoring and events, respectively.</p></li>
-</ul></dd>
-
-
-</dl></dd>
-
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A ggplot object.</p>
+    <p>A ggsurvfit (ggplot) object.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

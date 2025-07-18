@@ -313,10 +313,6 @@ test_that("make_surv_dataset calculates survival data correctly", {
 
   # Check that time values are positive
   expect_true(all(result$time >= 0))
-
-  # Check that ev_first and ev_lastobs are calculated correctly
-  expect_true(all(result$ev_first >= 0))
-  expect_true(all(result$ev_lastobs >= 0))
 })
 
 test_that("make_surv_dataset handles no events correctly", {

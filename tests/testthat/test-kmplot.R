@@ -281,19 +281,6 @@ test_that("kmplot handles edge cases with survival analysis", {
   )
 })
 
-test_that("kmplot handles survminer parameters correctly", {
-  mock_nif <- create_mock_nif_with_events()
-
-  # Test with risk table
-  expect_silent(
-    kmplot(
-      nif = mock_nif,
-      analyte = "EV_HEADACHE",
-      risk.table = TRUE
-    )
-  )
-})
-
 test_that("kmplot returns correct object structure", {
   mock_nif <- create_mock_nif_with_events()
 

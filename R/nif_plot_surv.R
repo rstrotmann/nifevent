@@ -110,9 +110,9 @@ make_surv_dataset <- function(
   # SURVIVAL DATA SET CREATION
   # status = 1: events
   events <- analyte_data %>%
-    filter(DV == 1) %>%
-    mutate(status = 1) %>%
-    select(ID, time = TAFD, status, any_of(group))
+    filter(.data$DV == 1) %>%
+    mutate(status = 1, time = .data$TAFD) %>%
+    select(c("ID", "time", "status", any_of(group)))
 
   if(nrow(events) == 0){
     nif:::conditional_message(
@@ -120,8 +120,8 @@ make_surv_dataset <- function(
       silent = silent)
   } else {
     events <- events %>%
-      group_by(ID) %>%
-      filter(time == min(time, na.rm = TRUE)) %>%
+      group_by(.data$ID) %>%
+      filter(.data$time == min(.data$time, na.rm = TRUE)) %>%
       ungroup() %>%
       distinct()
   }
@@ -130,21 +130,15 @@ make_surv_dataset <- function(
 
   # status = 0: censoring
   censoring <- nif %>%
-    filter(EVID == 0) %>%
-    reframe(time = max(TAFD), .by = c("ID", any_of(group))) %>%
-    filter(!ID %in% ids) %>%
+    filter(.data$EVID == 0) %>%
+    reframe(time = max(.data$TAFD), .by = c("ID", any_of(group))) %>%
+    filter(!.data$ID %in% ids) %>%
     mutate(status = 0)
 
   result <- rbind(events, censoring) %>%
-    arrange(ID, time) %>%
+    arrange("ID", "time") %>%
     {if(convert_tafd_h_to_d == TRUE)
       mutate(., time = .data$time/24) else .}
-
-  # # Check if we have any events
-  # if (all(result$status == 0)) {
-  #   nif:::conditional_message(
-  #     "No events found for analyte '", analyte, "'",
-  #     silent = silent)}
 
   return(result)
 }
@@ -160,7 +154,6 @@ make_surv_dataset <- function(
 #' @param dose The dose, defaults to all doses, if NULL.
 #' @param title The plot title, defaults to none if NULL.
 #' @param y_label The y axis label, defaults to the analyte, if NULL.
-#' @param ... Further arguments to ggsurvplot.
 #' @param group Grouping variable.
 #' @param silent Suppress messages, as logical. Defaults to nif_option setting
 #'   if NULL.
@@ -170,9 +163,7 @@ make_surv_dataset <- function(
 #' @param show_risk_table Add risk table, as logical.
 #' @param show_ci Add confidence interval, as logical.
 #'
-#' @inheritDotParams survminer::ggsurvplot risk.table pval conf.int surv.median.line
-#'
-#' @returns A ggplot object.
+#' @returns A ggsurvfit (ggplot) object.
 #'
 #' @import ggsurvfit
 #' @import ggplot2
@@ -188,8 +179,7 @@ kmplot <- function(
     show_censoring = TRUE,
     show_risk_table = TRUE,
     show_ci = TRUE,
-    silent = NULL,
-    ...
+    silent = NULL
   ) {
 
   # INPUT VALIDATIONS
@@ -244,7 +234,7 @@ kmplot <- function(
     group = group,
     convert_tafd_h_to_d = convert_tafd_h_to_d,
     silent = silent) %>%
-    filter(time >= 0)
+    filter(.data$time >= 0)
 
   # Check if we have any data for analysis
   if (nrow(temp) == 0) {
