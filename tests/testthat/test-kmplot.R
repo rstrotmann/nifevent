@@ -140,10 +140,11 @@ test_that("kmplot handles edge cases in survival data", {
   no_events_nif <- mock_nif %>%
     mutate(DV = ifelse(ANALYTE == "EV_HEADACHE", 0, DV))
 
-  expect_warning(
+  expect_message(
     kmplot(
       nif = no_events_nif,
-      analyte = "EV_HEADACHE"
+      analyte = "EV_HEADACHE",
+      silent = FALSE
     ),
     "No events found for analyte 'EV_HEADACHE'"
   )
@@ -243,7 +244,7 @@ test_that("kmplot handles convert_tafd_h_to_d parameter correctly", {
     analyte = "EV_HEADACHE",
     convert_tafd_h_to_d = TRUE
   )
-  expect_true(inherits(result1, "ggsurv"))
+  expect_true(inherits(result1, "ggsurvfit"))
 
   # Test with convert_tafd_h_to_d = FALSE
   result2 <- kmplot(
@@ -251,7 +252,7 @@ test_that("kmplot handles convert_tafd_h_to_d parameter correctly", {
     analyte = "EV_HEADACHE",
     convert_tafd_h_to_d = FALSE
   )
-  expect_true(inherits(result2, "ggsurv"))
+  expect_true(inherits(result2, "ggsurvfit"))
 })
 
 test_that("kmplot handles edge cases with survival analysis", {
@@ -296,15 +297,15 @@ test_that("kmplot handles survminer parameters correctly", {
 test_that("kmplot returns correct object structure", {
   mock_nif <- create_mock_nif_with_events()
 
-  # Test that function returns a survminer object
+  # Test that function returns a ggplot object
   result <- kmplot(
     nif = mock_nif,
     analyte = "EV_HEADACHE"
   )
 
   # Check that result is a survminer object (not ggplot directly)
-  expect_true(inherits(result, "ggsurv"))
-  expect_true(inherits(result, "list"))
+  expect_true(inherits(result, "ggplot"))
+  expect_true(inherits(result, "ggsurvfit"))
 })
 
 test_that("kmplot handles legend and labels correctly", {
@@ -318,7 +319,7 @@ test_that("kmplot handles legend and labels correctly", {
     y_label = "Custom Label"
   )
 
-  expect_true(inherits(result, "ggsurv"))
+  expect_true(inherits(result, "ggsurvfit"))
 
   # Test with NULL title and y_label
   result2 <- kmplot(
@@ -328,7 +329,7 @@ test_that("kmplot handles legend and labels correctly", {
     y_label = NULL
   )
 
-  expect_true(inherits(result2, "ggsurv"))
+  expect_true(inherits(result2, "ggsurvfit"))
 })
 
 test_that("kmplot handles data with only one group", {
@@ -362,3 +363,4 @@ test_that("kmplot handles data with missing values in group variable", {
     )
   )
 })
+

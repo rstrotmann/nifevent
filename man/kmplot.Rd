@@ -12,6 +12,9 @@ kmplot(
   convert_tafd_h_to_d = TRUE,
   title = NULL,
   y_label = NULL,
+  show_censoring = TRUE,
+  show_risk_table = TRUE,
+  show_ci = TRUE,
   silent = NULL,
   ...
 )
@@ -31,6 +34,12 @@ defaults to TRUE.}
 \item{title}{The plot title, defaults to none if NULL.}
 
 \item{y_label}{The y axis label, defaults to the analyte, if NULL.}
+
+\item{show_censoring}{Add censor mark, as logical.}
+
+\item{show_risk_table}{Add risk table, as logical.}
+
+\item{show_ci}{Add confidence interval, as logical.}
 
 \item{silent}{Suppress messages, as logical. Defaults to nif_option setting
 if NULL.}

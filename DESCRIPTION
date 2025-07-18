@@ -15,8 +15,7 @@ Imports:
   ggplot2,
   tidyselect,
   lubridate,
-  survminer,
-  survival,
+  ggsurvfit,
   lifecycle
 Encoding: UTF-8
 LazyData: true

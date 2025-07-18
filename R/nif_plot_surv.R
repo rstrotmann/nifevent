@@ -1,3 +1,7 @@
+# References:
+# https://bioconnector.github.io/workshops/r-survival.html
+
+
 #' Prepare data set for survival analysis
 #'
 #' @details
@@ -26,6 +30,8 @@ make_surv_dataset <- function(
     group = NULL,
     convert_tafd_h_to_d = TRUE,
     silent = NULL) {
+
+  # INPUT VALIDATIONS
   # Validate nif parameter
   if (!inherits(nif, "nif")) {
     stop("nif must be a nif object")
@@ -61,8 +67,10 @@ make_surv_dataset <- function(
     }
   }
 
+  # DATA PREPROCESSING AND VALIDATION
   # Filter data for the analyte
   analyte_data <- nif %>%
+    as.data.frame() %>%
     filter(.data$ANALYTE == analyte) %>%
     filter(.data$EVID == 0)
 
@@ -99,29 +107,44 @@ make_surv_dataset <- function(
     stop("Missing time values found for events")
   }
 
-  result <- analyte_data %>%
-    {if(convert_tafd_h_to_d == TRUE)
-      mutate(., TIMED = .data$TAFD/24) else
-        mutate(., TIMED = .data$TAFD)} %>%
-    group_by(.data$ID) %>%
-    mutate(ev_first = min(c(.data$TIMED[.data$DV == 1], Inf), na.rm = TRUE)) %>%
-    mutate(ev_lastobs = max(.data$TIMED)) %>%
-    ungroup() %>%
-    {if(is.null(group)) {
-      select(., "ID", "ev_first", "ev_lastobs")
-    } else {
-      select(., "ID", any_of(group), "ev_first", "ev_lastobs")
-    }} %>%
-    distinct() %>%
-    rowwise() %>%
-    mutate(time = min(c(.data$ev_first, .data$ev_lastobs), na.rm = TRUE)) %>%
-    mutate(status = case_when(
-      is.infinite(.data$ev_first) ~ 0, .default = 1))
+  # SURVIVAL DATA SET CREATION
+  # status = 1: events
+  events <- analyte_data %>%
+    filter(DV == 1) %>%
+    mutate(status = 1) %>%
+    select(ID, time = TAFD, status, any_of(group))
 
-  # Check if we have any events
-  if (all(result$status == 0)) {
-    warning(paste0("No events found for analyte '", analyte, "'"))
+  if(nrow(events) == 0){
+    nif:::conditional_message(
+      "No events found for analyte '", analyte, "'",
+      silent = silent)
+  } else {
+    events <- events %>%
+      group_by(ID) %>%
+      filter(time == min(time, na.rm = TRUE)) %>%
+      ungroup() %>%
+      distinct()
   }
+
+  ids <- unique(events$ID)
+
+  # status = 0: censoring
+  censoring <- nif %>%
+    filter(EVID == 0) %>%
+    reframe(time = max(TAFD), .by = c("ID", any_of(group))) %>%
+    filter(!ID %in% ids) %>%
+    mutate(status = 0)
+
+  result <- rbind(events, censoring) %>%
+    arrange(ID, time) %>%
+    {if(convert_tafd_h_to_d == TRUE)
+      mutate(., time = .data$time/24) else .}
+
+  # # Check if we have any events
+  # if (all(result$status == 0)) {
+  #   nif:::conditional_message(
+  #     "No events found for analyte '", analyte, "'",
+  #     silent = silent)}
 
   return(result)
 }
@@ -143,13 +166,15 @@ make_surv_dataset <- function(
 #'   if NULL.
 #' @param convert_tafd_h_to_d Convert the TAFD field from hours to days,
 #'   defaults to TRUE.
+#' @param show_censoring Add censor mark, as logical.
+#' @param show_risk_table Add risk table, as logical.
+#' @param show_ci Add confidence interval, as logical.
 #'
 #' @inheritDotParams survminer::ggsurvplot risk.table pval conf.int surv.median.line
 #'
 #' @returns A ggplot object.
 #'
-#' @importFrom survival survfit
-#' @importFrom survminer ggsurvplot
+#' @import ggsurvfit
 #' @import ggplot2
 #' @export
 kmplot <- function(
@@ -160,11 +185,19 @@ kmplot <- function(
     convert_tafd_h_to_d = TRUE,
     title = NULL,
     y_label = NULL,
+    show_censoring = TRUE,
+    show_risk_table = TRUE,
+    show_ci = TRUE,
     silent = NULL,
     ...
   ) {
+
+  # INPUT VALIDATIONS
   # Validate convert_tafd_h_to_d is logical
   validate_logical_param(convert_tafd_h_to_d, "convert_tafd_h_to_d")
+  validate_logical_param(show_censoring, "show_censoring")
+  validate_logical_param(show_risk_table, "show_risk_table")
+  validate_logical_param(show_ci, "show_ci")
   validate_logical_param(silent, "silent", allow_null = TRUE)
 
   # Validate analyte, title, y_label
@@ -183,7 +216,8 @@ kmplot <- function(
     stop(paste0("No data found for analyte '", analyte, "'"))
   }
 
-  # Handle dose filtering
+  # DATA PREPROCESSING
+  # Dose filtering
   if (is.null(dose)) {
     dose <- unique(filter(nif, .data$EVID == 0)$DOSE)
   } else {
@@ -209,7 +243,8 @@ kmplot <- function(
     analyte = analyte,
     group = group,
     convert_tafd_h_to_d = convert_tafd_h_to_d,
-    silent = silent)
+    silent = silent) %>%
+    filter(time >= 0)
 
   # Check if we have any data for analysis
   if (nrow(temp) == 0) {
@@ -225,31 +260,28 @@ kmplot <- function(
       mutate(group = 1)
   }
 
-  # Create survival fit
-  sf <- survival::survfit(Surv(time, status) ~ group, data = temp)
-
-  # Store the data in the survival fit object for survminer
-  sf$data <- temp
-
-  if(!is.null(sf$strata)) {
-    names(sf$strata) <- gsub("group=", "", names(sf$strata))
-  }
-
-  # Create plot
-  p <- survminer::ggsurvplot(sf, data = temp, ...)
+  p <- ggsurvfit::survfit2(Surv(time, status) ~ group, data = temp) %>%
+    ggsurvfit() +
+    {if(show_ci == TRUE) add_confidence_interval()} +
+    {if(show_risk_table == TRUE) add_risktable()} +
+    {if(show_censoring == TRUE) add_censor_mark()} +
+    ylim(0, 1)
 
   # Handle legend and labels
-  legend <- if (!is.null(group)) nif::nice_enumeration(group) else NULL
+  legend <- if(!is.null(group)) nif::nice_enumeration(group) else NULL
   if(is.null(y_label)) {
     y_label <- paste0("S[", analyte, "]")
   }
+  x_label = ifelse(convert_tafd_h_to_d, "days", "hours")
 
-  p$plot <- p$plot +
-    ggplot2::labs(fill = legend, color = legend, y = y_label,
-                  title = title)
+  p <- p +
+    ggplot2::labs(
+      fill = legend, color = legend,
+      x = x_label, y = y_label,
+      title = title)
 
   if(is.null(sf$strata)) {
-    p$plot <- p$plot +
+    p <- p +
       theme(legend.position = "none")
   }
 
