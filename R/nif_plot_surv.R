@@ -270,10 +270,5 @@ kmplot <- function(
       x = x_label, y = y_label,
       title = title)
 
-  # if(is.null(sf$strata)) {
-  #   p <- p +
-  #     theme(legend.position = "none")
-  # }
-
   return(p)
 }
