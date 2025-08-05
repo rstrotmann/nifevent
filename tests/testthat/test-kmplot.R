@@ -32,7 +32,7 @@ test_that("kmplot validates input parameters correctly", {
       nif = data.frame(),
       analyte = "EV_HEADACHE"
     ),
-    "Input must be a NIF object"
+    "Input must be a nif object"
   )
 
   # Test error for missing analyte

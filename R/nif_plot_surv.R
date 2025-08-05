@@ -32,12 +32,7 @@ make_surv_dataset <- function(
     silent = NULL) {
 
   # INPUT VALIDATIONS
-  # Validate nif parameter
-  if (!inherits(nif, "nif")) {
-    stop("nif must be a nif object")
-  }
-
-  # validate other parameters
+  nif:::validate_nif(nif)
   validate_char_param(analyte, "analyte")
   validate_char_param(group, "group", allow_null = TRUE, allow_multiple = TRUE)
   validate_logical_param(convert_tafd_h_to_d, "convert_tafd_h_to_d")
@@ -183,7 +178,7 @@ kmplot <- function(
   ) {
 
   # INPUT VALIDATIONS
-  # Validate convert_tafd_h_to_d is logical
+  nif:::validate_nif(nif)
   validate_logical_param(convert_tafd_h_to_d, "convert_tafd_h_to_d")
   validate_logical_param(show_censoring, "show_censoring")
   validate_logical_param(show_risk_table, "show_risk_table")
@@ -195,11 +190,6 @@ kmplot <- function(
   validate_char_param(title, "title", allow_null = TRUE)
   validate_char_param(y_label, "y_label", allow_null = TRUE)
   validate_char_param(group, "group", allow_multiple = TRUE, allow_null = TRUE)
-
-  # Validate input is a NIF object
-  if (!inherits(nif, "nif")) {
-    stop("Input must be a NIF object")
-  }
 
   # Check if analyte exists in the data
   if (!analyte %in% unique(nif$ANALYTE)) {
@@ -217,8 +207,7 @@ kmplot <- function(
       missing_doses <- setdiff(dose, available_doses)
       stop(paste0(
         "No data found for specified ",
-        nif::plural("dose", length(missing_doses) > 1),
-        ": ",
+        nif::plural("dose", length(missing_doses) > 1), ": ",
         nif::nice_enumeration(missing_doses)
       ))
     }

@@ -33,7 +33,7 @@ test_that("make_surv_dataset validates input parameters correctly", {
       nif = data.frame(),
       analyte = "EV_HEADACHE"
     ),
-    "nif must be a nif object"
+    "Input must be a nif object"
   )
 
   # Test error for NULL analyte
@@ -223,7 +223,8 @@ test_that("make_surv_dataset handles TAFD filtering correctly", {
     expect_error(
       make_surv_dataset(
         nif = all_negative_tafd_nif,
-        analyte = "EV_HEADACHE"
+        analyte = "EV_HEADACHE",
+        silent = FALSE
       ),
       "No event data found for analyte 'EV_HEADACHE'"
     ),
