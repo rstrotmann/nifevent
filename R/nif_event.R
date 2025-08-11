@@ -252,6 +252,9 @@ add_event_observation <- function(
   if(is.null(analyte))
     analyte <- paste0("EV_", testcd)
 
+  # ensure that keep includes all fields already present in the nif
+  keep <- unique(c(keep, names(nif)))
+
   nif <- nif %>%
     nif:::ensure_analyte()
 
