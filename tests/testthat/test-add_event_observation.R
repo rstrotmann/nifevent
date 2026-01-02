@@ -15,7 +15,7 @@ create_mock_nif <- function() {
       TRTDY = 1,
       TAFD = as.numeric(difftime(DTC, RFSTDTC, units = "hours"))
     ) %>%
-    nif::new_nif()
+    nif::nif()
 }
 
 
@@ -257,8 +257,7 @@ test_that("add_event_observation handles edge cases", {
   empty_nif <- mock_nif[0, ]
   class(empty_nif) <- c("nif", "data.frame")
 
-  expect_warning(
-    expect_error(
+  expect_error(
     add_event_observation(
       nif = empty_nif,
       sdtm = mock_sdtm,
@@ -268,7 +267,7 @@ test_that("add_event_observation handles edge cases", {
       silent = TRUE
     ),
     "Please add at least one administration first!"
-  ))
+  )
 
   # Test with non-existent domain
   expect_error(
@@ -329,3 +328,4 @@ test_that("add_event_observation validates character parameters", {
     "analyte must be a single character string"
   )
 })
+

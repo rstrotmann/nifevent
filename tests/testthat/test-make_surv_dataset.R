@@ -20,7 +20,7 @@ create_mock_nif_with_events <- function() {
       TRTDY = 1,
       TAFD = as.numeric(difftime(DTC, RFSTDTC, units = "hours"))
     ) %>%
-    nif::new_nif()
+    nif::nif()
 }
 
 test_that("make_surv_dataset validates input parameters correctly", {
@@ -97,7 +97,7 @@ test_that("make_surv_dataset validates required columns", {
       nif = incomplete_nif2,
       analyte = "EV_HEADACHE"
     ),
-    "Required columns ANALYTE and DV not found in nif data set"
+    "Missing essential fields in nif object: DV"
   )
 })
 

@@ -58,10 +58,12 @@ validate_numeric_param <- function(
     param,
     param_name,
     allow_null = FALSE,
+    allow_na = FALSE,
     allow_multiple = FALSE) {
-  if(any(is.na(param))) {
-    stop(paste0(param_name, " must not contain NA"))
-  }
+
+  # if(any(is.na(param))) {
+  #   stop(paste0(param_name, " must not contain NA"))
+  # }
 
   if (allow_null && is.null(param)) {
     return(invisible(NULL))

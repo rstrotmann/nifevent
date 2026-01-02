@@ -7,8 +7,8 @@
 make_event(
   sdtm,
   domain,
-  testcd,
-  event_filter,
+  event_filter = "TRUE",
+  testcd = NULL,
   event_diff = FALSE,
   analyte = NULL,
   parent = NULL,
@@ -16,7 +16,7 @@ make_event(
   cmt = NULL,
   subject_filter = "!ACTARMCD \%in\% c('SCRNFAIL', 'SCREENFAIL', 'NOTTRT')",
   observation_filter = "TRUE",
-  DTC_field = NULL,
+  dtc_field = NULL,
   keep = NULL,
   silent = NULL
 )
@@ -26,11 +26,11 @@ make_event(
 
 \item{domain}{The domain code as character.}
 
-\item{testcd}{The testcode from xxTESTCD where xx is the domain code, as
-character. Not used if NULL.}
-
 \item{event_filter}{A filter term to characterize the events to extract, as
 character.}
+
+\item{testcd}{The testcode from xxTESTCD where xx is the domain code, as
+character. Not used if NULL.}
 
 \item{event_diff}{Only retain events where there is a change from the event
 filter evaluating to TRUE after being FALSE in the previous observation,
@@ -53,7 +53,7 @@ character.}
 \item{observation_filter}{The filtering to apply to the observation source
 data, as character.}
 
-\item{DTC_field}{The field to use as the date-time code for the observation.
+\item{dtc_field}{The field to use as the date-time code for the observation.
 Defaults to 'xxDTC', with xx the domain name, if NULL.}
 
 \item{keep}{Columns to keep, as character.}

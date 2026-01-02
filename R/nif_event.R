@@ -16,7 +16,7 @@
 #'   character.
 #' @param observation_filter The filtering to apply to the observation source
 #'   data, as character.
-#' @param DTC_field The field to use as the date-time code for the observation.
+#' @param dtc_field The field to use as the date-time code for the observation.
 #'   Defaults to 'xxDTC', with xx the domain name, if NULL.
 #' @param keep Columns to keep, as character.
 #' @param silent Suppress messages, as logical. Defaults to nif_option setting
@@ -29,31 +29,33 @@
 #' @return A data frame.
 #' @importFrom stats as.formula
 #' @importFrom lubridate date
+#' @importFrom nif lubrify_dates
 #' @import dplyr
 #' @import nif
 #' @export
 #' @keywords internal
 make_event <- function(
-    sdtm,
-    domain,
-    testcd,
-    event_filter,
-    event_diff = FALSE,
-    analyte = NULL,
-    parent = NULL,
-    metabolite = FALSE,
-    cmt = NULL,
-    subject_filter = "!ACTARMCD %in% c('SCRNFAIL', 'SCREENFAIL', 'NOTTRT')",
-    observation_filter = "TRUE",
-    DTC_field = NULL,
-    keep = NULL,
-    silent = NULL) {
+  sdtm,
+  domain,
+  event_filter = "TRUE",
+  testcd = NULL,
+  event_diff = FALSE,
+  analyte = NULL,
+  parent = NULL,
+  metabolite = FALSE,
+  cmt = NULL,
+  subject_filter = "!ACTARMCD %in% c('SCRNFAIL', 'SCREENFAIL', 'NOTTRT')",
+  observation_filter = "TRUE",
+  dtc_field = NULL,
+  keep = NULL,
+  silent = NULL
+) {
   # Validate inputs
   if (!inherits(sdtm, "sdtm")) {
     stop("sdtm must be an sdtm object")
   }
 
-  if(is.null(analyte) && is.null(testcd)) {
+  if (is.null(analyte) && is.null(testcd)) {
     stop("analyte and testcd cannot be both NULL!")
   }
 
@@ -65,15 +67,22 @@ make_event <- function(
   validate_char_param(analyte, "analyte", allow_null = TRUE)
   validate_char_param(parent, "parent", allow_null = TRUE)
   validate_logical_param(metabolite, "metabolite")
-  validate_numeric_param(cmt, "cmt", allow_null = TRUE)
+
+  nif:::validate_numeric_param(cmt, "cmt", allow_na = TRUE, allow_null = TRUE)
+
   validate_char_param(subject_filter, "subject_filter", allow_null = TRUE)
-  validate_char_param(observation_filter, "observation_filter", allow_null = TRUE)
-  validate_char_param(DTC_field, "DTC_field", allow_null = TRUE)
+  validate_char_param(observation_filter, "observation_filter",
+                      allow_null = TRUE)
+  validate_char_param(dtc_field, "dtc_field", allow_null = TRUE)
   validate_char_param(keep, "keep", allow_null = TRUE, allow_multiple = TRUE)
   validate_logical_param(silent, "silent", allow_null = TRUE)
 
-  if(is.null(analyte) && is.null(testcd)) {
+  if (is.null(analyte) && is.null(testcd)) {
     stop("analyte and testcd cannot be both NULL!")
+  }
+
+  if (is.null(cmt)) {
+    cmt <- NA_integer_
   }
 
   domain_name <- tolower(domain)
@@ -81,91 +90,115 @@ make_event <- function(
     stop(paste0("Domain '", domain_name, "' not found in sdtm object"))
   }
 
-  # Set analyte name - ensure we don't use NULL testcd in string concatenation
-  if(is.null(analyte)) {
-    if(is.null(testcd)) {
-      stop("Both analyte and testcd cannot be NULL. Please specify at least one of them.")
+  # Set analyte name
+  if (is.null(analyte)) {
+    if (is.null(testcd)) {
+      stop("Analyte and testcd cannot both be NULL!")
     }
     analyte <- paste0("EV_", testcd)
   }
-  if(is.null(parent)) parent <- analyte
+  if (is.null(parent)) parent <- analyte
 
   # Create fields
-  if(is.null(DTC_field))
-    DTC_field <- paste0(toupper(domain), "DTC")
+  if (is.null(dtc_field)) {
+    dtc_field <- paste0(toupper(domain), "DTC")
+  }
 
   # Get subject data
-  tryCatch({
-    sbs <- nif:::make_subjects(
-      domain(sdtm, "dm"), domain(sdtm, "vs"), subject_filter, keep)
-  }, error = function(e) {
-    stop(paste0("Error getting subject data: ", e$message))
-  })
+  tryCatch(
+    {
+      sbs <- nif:::make_subjects(
+        domain(sdtm, "dm"), domain(sdtm, "vs"), subject_filter, keep
+      )
+    },
+    error = function(e) {
+      stop(paste0("Error getting subject data: ", e$message))
+    }
+  )
 
-  obj <- nif::domain(sdtm, domain_name) %>%
-    nif:::lubrify_dates()
+  obj <- nif::domain(sdtm, domain_name) |>
+    nif::lubrify_dates()
 
   # check and apply observation filter
-  if(!nif:::is_valid_filter(obj, observation_filter))
+  if (!nif:::is_valid_filter(obj, observation_filter)) {
     stop(paste0("observation filter '", observation_filter, "' is not valid"))
+  }
 
-  filtered_obj <- obj %>%
-    mutate(SRC_DOMAIN = .data$DOMAIN) %>%
-    {if(paste0(toupper(domain), "SEQ") %in% names(obj))
-      mutate(., SRC_SEQ = .data[[paste0(toupper(domain), "SEQ")]]) else
-        mutate(., SRC_SEQ = NA)} %>%
+  filtered_obj <- obj |>
+    mutate(SRC_DOMAIN = .data$DOMAIN)
+
+  if (paste0(toupper(domain), "SEQ") %in% names(obj)) {
+    filtered_obj <- filtered_obj |>
+      mutate(SRC_SEQ = .data[[paste0(toupper(domain), "SEQ")]])
+  } else {
+    filtered_obj <- filtered_obj |>
+      mutate(SRC_SEQ = NA)
+  }
+
+  filtered_obj <- filtered_obj |>
     filter(eval(parse(text = observation_filter)))
 
   # Add warning if observation_filter returns no entries
   if (nrow(filtered_obj) == 0) {
-    stop("The observation_filter '", observation_filter, "' returned no entries.")
+    stop("The observation_filter '", observation_filter,
+         "' returned no entries.")
   }
 
   # filter for testcd
-  if(!is.null(testcd)){
+  if (!is.null(testcd)) {
     testcd_field <- paste0(toupper(domain), "TESTCD")
-    if(!testcd %in% unique(filtered_obj[[testcd_field]]))
+    if (!testcd %in% unique(filtered_obj[[testcd_field]])) {
       stop(paste0(
         "testcd ", testcd,
-        " not found after filtering for observation_filter!"))
+        " not found after filtering for observation_filter!"
+      ))
+    }
 
-    filtered_obj <- filtered_obj %>%
+    filtered_obj <- filtered_obj |>
       filter(.data[[testcd_field]] == testcd)
   }
 
   # check and apply event filter
-  if(!nif:::is_valid_filter(filtered_obj, event_filter))
+  if (!nif:::is_valid_filter(filtered_obj, event_filter)) {
     stop(paste0("event filter '", event_filter, "' is not valid"))
+  }
 
   # flag marks the event condition, dflag marks a change in the event condition
   # ev_flag marks the attainment of the condition
-  temp <- filtered_obj %>%
+  temp <- filtered_obj |>
     mutate(flag = case_when(
       eval(parse(text = event_filter)) ~ 1,
-      .default = 0))
+      .default = 0
+    ))
 
   # Apply event differentiation, if event_diff == TRUE
-  if(event_diff == TRUE) {
-    temp <- temp %>%
+  if (event_diff == TRUE) {
+    temp <- temp |>
       mutate(dflag = case_when(
-        .data$flag != lag(.data$flag) ~ 1, .default = 0)) %>%
+        .data$flag != lag(.data$flag) ~ 1,
+        .default = 0
+      )) |>
       mutate(flag = case_when(
         .data$flag == 1 & .data$dflag == 1 ~ 1,
-        .default = 0)) %>%
+        .default = 0
+      )) |>
       select(-c("dflag"))
   }
 
-  out <- temp %>%
-    filter(.data$flag == 1) %>%
-    mutate(DTC = .data[[DTC_field]]) %>%
-    inner_join(sbs, by = "USUBJID") %>%
-    group_by(.data$USUBJID) %>%
+  temp |>
+    filter(.data$flag == 1) |>
+    mutate(DTC = .data[[dtc_field]]) |>
+    inner_join(sbs, by = "USUBJID") |>
+    group_by(.data$USUBJID) |>
     mutate(TRTDY = as.numeric(
-      difftime(lubridate::date(.data$DTC),
-               lubridate::date(nif::safe_min(.data$RFSTDTC))),
-      units = "days") + 1) %>%
-    ungroup() %>%
-    filter(!is.na(.data$DTC)) %>%
+      difftime(
+        lubridate::date(.data$DTC),
+        lubridate::date(nif::safe_min(.data$RFSTDTC))
+      ),
+      units = "days"
+    ) + 1) |>
+    ungroup() |>
+    filter(!is.na(.data$DTC)) |>
     mutate(
       ANALYTE = analyte,
       DV = .data$flag,
@@ -177,10 +210,9 @@ make_event <- function(
       METABOLITE = metabolite,
       EVID = 0,
       MDV = as.numeric(is.na(.data$DV)),
-      IMPUTATION = "") %>%
+      IMPUTATION = ""
+    ) |>
     select(-c("flag"))
-
-  return(out)
 }
 
 
@@ -199,22 +231,22 @@ make_event <- function(
 #' @return A nif object.
 #' @export
 add_event_observation <- function(
-    nif,
-    sdtm,
-    domain,
-    testcd = NULL,
-    event_filter,
-    event_diff = FALSE,
-    analyte = NULL,
-    parent = NULL,
-    metabolite = FALSE,
-    cmt = NULL,
-    subject_filter = "!ACTARMCD %in% c('SCRNFAIL', 'SCREENFAIL', 'NOTTRT')",
-    observation_filter = "TRUE",
-    DTC_field = NULL,
-    keep = NULL,
-    debug = FALSE,
-    silent = NULL
+  nif,
+  sdtm,
+  domain,
+  event_filter,
+  testcd = NULL,
+  event_diff = FALSE,
+  analyte = NULL,
+  parent = NULL,
+  metabolite = FALSE,
+  cmt = NULL,
+  subject_filter = "!ACTARMCD %in% c('SCRNFAIL', 'SCREENFAIL', 'NOTTRT')",
+  observation_filter = "TRUE",
+  dtc_field = NULL,
+  keep = NULL,
+  debug = FALSE,
+  silent = NULL
 ) {
   # Validate inputs
   if (!inherits(nif, "nif")) {
@@ -225,7 +257,7 @@ add_event_observation <- function(
     stop("sdtm must be an sdtm object")
   }
 
-  if(is.null(analyte) && is.null(testcd)) {
+  if (is.null(analyte) && is.null(testcd)) {
     stop("analyte and testcd cannot be both NULL!")
   }
 
@@ -239,58 +271,69 @@ add_event_observation <- function(
   validate_logical_param(metabolite, "metabolite")
   validate_numeric_param(cmt, "cmt", allow_null = TRUE)
   validate_char_param(subject_filter, "subject_filter", allow_null = TRUE)
-  validate_char_param(observation_filter, "observation_filter", allow_null = TRUE)
-  validate_char_param(DTC_field, "DTC_field", allow_null = TRUE)
+  validate_char_param(observation_filter, "observation_filter",
+                      allow_null = TRUE)
+  validate_char_param(dtc_field, "dtc_field", allow_null = TRUE)
   validate_char_param(keep, "keep", allow_null = TRUE, allow_multiple = TRUE)
   validate_logical_param(debug, "debug")
   validate_logical_param(silent, "silent", allow_null = TRUE)
 
-  debug = isTRUE(debug) | isTRUE(nif:::nif_option_value("debug"))
-  if(isTRUE(debug))
+  debug <- isTRUE(debug) | isTRUE(nif:::nif_option_value("debug"))
+  if (isTRUE(debug)) {
     keep <- c(keep, "SRC_DOMAIN", "SRC_SEQ")
+  }
 
-  if(is.null(analyte))
+  if (is.null(analyte)) {
     analyte <- paste0("EV_", testcd)
+  }
 
   # ensure that keep includes all fields already present in the nif
   keep <- unique(c(keep, names(nif)))
 
-  nif <- nif %>%
+  nif <- nif |>
     nif:::ensure_analyte()
 
-  if(length(nif::parents(nif)) == 0)
+  if (length(nif:::parents(nif)) == 0) {
     stop("Please add at least one administration first!")
-
-  # Test if compartment is already assigned
-  if(!is.null(cmt))
-    if(cmt %in% unique(nif$CMT))
-      warning(paste0("Compartment ", cmt, " is already assigned!"))
-
-  # Assign compartment for observation if CMT == NULL
-  if(is.null(cmt)) {
-    cmt <- max(nif$CMT) + 1
-    nif:::conditional_message(
-      paste0("Compartment for ", analyte,
-             " was not specified and has been set to ", cmt),
-      silent = silent)
   }
 
-  if(is.null(parent)) {
+  # Test if compartment is already assigned
+  if (!is.null(cmt)) {
+    if (cmt %in% unique(nif$CMT)) {
+      warning(paste0("Compartment ", cmt, " is already assigned!"))
+    }
+  }
+
+  # Assign compartment for observation if CMT == NULL
+  if (is.null(cmt)) {
+    cmt <- max(nif$CMT) + 1
+    nif:::conditional_message(
+      paste0(
+        "Compartment for ", analyte,
+        " was not specified and has been set to ", cmt
+      ),
+      silent = silent
+    )
+  }
+
+  if (is.null(parent)) {
     parent <- nif:::guess_parent(nif)
-    if(is.null(parent)) {
+    if (is.null(parent)) {
       stop(paste0(
         "A parent could not be automatically determined. ",
-        "Please specify a parent value explicitly."))
+        "Please specify a parent value explicitly."
+      ))
     }
     nif:::conditional_message(
       paste0("Parent for ", analyte, " was set to ", parent, "!"),
-      silent = silent)
+      silent = silent
+    )
   }
 
   event_obs <- make_event(
     sdtm,
     domain,
-    testcd,
+    testcd = testcd,
     event_filter,
     event_diff,
     analyte = analyte,
@@ -299,17 +342,14 @@ add_event_observation <- function(
     cmt = cmt,
     subject_filter = subject_filter,
     observation_filter = observation_filter,
-    DTC_field = DTC_field,
-    keep = keep) %>%
+    dtc_field = dtc_field,
+    keep = keep
+  ) |>
     select(any_of(c(nif:::standard_nif_fields, "IMPUTATION", keep)))
 
-  obj <- dplyr::bind_rows(
-    nif,
-    event_obs) %>%
-    arrange(.data$USUBJID, .data$DTC) %>%
-    mutate(ID = as.numeric(as.factor(.data$USUBJID))) %>%
-    nif::make_time() %>%
-    nif::normalize_nif(keep = keep)
-
-  return(obj)
+  dplyr::bind_rows(nif, event_obs) |>
+    arrange(.data$USUBJID, .data$DTC) |>
+    mutate(ID = as.numeric(as.factor(.data$USUBJID))) |>
+    nif:::make_time() |>
+    nif:::normalize_nif(keep = keep)
 }

@@ -19,7 +19,7 @@ create_mock_nif_with_events <- function() {
       TRTDY = 1,
       TAFD = as.numeric(difftime(DTC, RFSTDTC, units = "hours"))
     ) %>%
-    nif::new_nif()
+    nif::nif()
 }
 
 test_that("kmplot validates input parameters correctly", {
