@@ -1,11 +1,12 @@
 # Helper function to validate character string parameters
 validate_char_param <- function(
-    param,
-    param_name,
-    allow_null = FALSE,
-    allow_empty = FALSE,
-    allow_multiple = FALSE) {
-  if(any(is.na(param))) {
+  param,
+  param_name,
+  allow_null = FALSE,
+  allow_empty = FALSE,
+  allow_multiple = FALSE
+) {
+  if (any(is.na(param))) {
     stop(paste0(param_name, " must not contain NA"))
   }
 
@@ -13,10 +14,8 @@ validate_char_param <- function(
     return(invisible(NULL))
   }
 
-  if(
-    is.null(param) ||
-    !is.character(param) ||
-    (length(param) != 1 && !allow_multiple)) {
+  if (is.null(param) || !is.character(param) ||
+        (length(param) != 1 && !allow_multiple)) {
     stop(paste0(param_name, " must be a single character string"))
   }
 
@@ -24,17 +23,18 @@ validate_char_param <- function(
     stop(paste0(param_name, " must be a non-empty character string"))
   }
 
-  return(invisible(NULL))
+  invisible(NULL)
 }
 
 
 # Helper function to validate logical parameters
 validate_logical_param <- function(
-    param,
-    param_name,
-    allow_null = FALSE,
-    allow_multiple = FALSE) {
-  if(any(is.na(param))) {
+  param,
+  param_name,
+  allow_null = FALSE,
+  allow_multiple = FALSE
+) {
+  if (any(is.na(param))) {
     stop(paste0(param_name, " must not contain NA"))
   }
 
@@ -42,41 +42,30 @@ validate_logical_param <- function(
     return(invisible(NULL))
   }
 
-  if(
-    is.null(param) ||
-    !is.logical(param) ||
-    (length(param) != 1 && !allow_multiple)) {
+  if (is.null(param) || !is.logical(param) ||
+        (length(param) != 1 && !allow_multiple)) {
     stop(paste0(param_name, " must be a single logical value"))
   }
 
-  return(invisible(NULL))
+  invisible(NULL)
 }
 
 
 # Helper function to validate numeric parameters
 validate_numeric_param <- function(
-    param,
-    param_name,
-    allow_null = FALSE,
-    allow_na = FALSE,
-    allow_multiple = FALSE) {
-
-  # if(any(is.na(param))) {
-  #   stop(paste0(param_name, " must not contain NA"))
-  # }
-
-  if (allow_null && is.null(param)) {
+  param,
+  param_name,
+  allow_null = FALSE,
+  allow_na = FALSE,
+  allow_multiple = FALSE
+) {
+  if (allow_null && is.null(param))
     return(invisible(NULL))
-  }
 
-  if(
-    is.null(param) ||
-    !is.numeric(param) ||
-    (length(param) != 1 && !allow_multiple)) {
+  if (is.null(param) || !is.numeric(param) ||
+        (length(param) != 1 && !allow_multiple)) {
     stop(paste0(param_name, " must be a single numeric value"))
   }
 
-  return(invisible(NULL))
+  invisible(NULL)
 }
-
-
