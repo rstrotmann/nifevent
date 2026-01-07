@@ -293,7 +293,8 @@ add_event_observation <- function(
   nif <- nif |>
     nif:::ensure_analyte()
 
-  if (length(nif:::parents(nif)) == 0) {
+  # if (length(nif:::parents(nif)) == 0) {
+  if (nrow(filter(nif, .data$EVID == 1)) == 0) {
     stop("Please add at least one administration first!")
   }
 
