@@ -8,11 +8,11 @@
 ## Citation
 
 Strotmann R (2026). *nifevent: Event Observations for NIF Data Sets*. R
-package version 0.1.6.
+package version 0.1.7.
 
     @Manual{,
       title = {nifevent: Event Observations for NIF Data Sets},
       author = {Rainer Strotmann},
       year = {2026},
-      note = {R package version 0.1.6},
+      note = {R package version 0.1.7},
     }
