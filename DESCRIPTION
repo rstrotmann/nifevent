@@ -15,8 +15,7 @@ Imports:
   ggplot2,
   tidyselect,
   lubridate,
-  ggsurvfit,
-  lifecycle
+  ggsurvfit
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3

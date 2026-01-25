@@ -185,10 +185,15 @@ make_event <- function(
       select(-c("dflag"))
   }
 
+  join_fields <- "USUBJID"
+  if ("STUDYID" %in% names(temp) && "STUDYID" %in% names(sbs))
+    join_fields <- c(join_fields, "STUDYID")
+
   temp |>
     filter(.data$flag == 1) |>
     mutate(DTC = .data[[dtc_field]]) |>
-    inner_join(sbs, by = "USUBJID") |>
+    inner_join(sbs, by = join_fields) |>
+
     group_by(.data$USUBJID) |>
     mutate(TRTDY = as.numeric(
       difftime(
@@ -349,8 +354,6 @@ add_event_observation <- function(
     select(any_of(c(nif:::standard_nif_fields, "IMPUTATION", keep)))
 
   dplyr::bind_rows(nif, event_obs) |>
-    arrange(.data$USUBJID, .data$DTC) |>
-    mutate(ID = as.numeric(as.factor(.data$USUBJID))) |>
-    nif:::make_time() |>
     nif:::normalize_nif(keep = keep)
 }
+
