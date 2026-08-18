@@ -80,7 +80,7 @@ test_that("make_event validates sdtm input", {
       domain = "ae",
       event_filter = "AESEV == 'MILD'"
     ),
-    "sdtm must be an sdtm object"
+    "Input must be a sdtm object"
   )
 
   # Test error for NULL sdtm
@@ -90,7 +90,7 @@ test_that("make_event validates sdtm input", {
       domain = "ae",
       event_filter = "AESEV == 'MILD'"
     ),
-    "sdtm must be an sdtm object"
+    "Input must be a sdtm object"
   )
 
   # Test success with valid sdtm
@@ -118,7 +118,7 @@ test_that("make_event validates domain parameter", {
       event_filter = "AESEV == 'MILD'",
       testcd = "HEADACHE"
     ),
-    "domain must be a single character string"
+    "domain must be a character value"
   )
 
   # Test error for NULL domain
@@ -129,7 +129,7 @@ test_that("make_event validates domain parameter", {
       event_filter = "AESEV == 'MILD'",
       testcd = "HEADACHE"
     ),
-    "domain must be a single character string"
+    "domain must not be NULL"
   )
 
   # Test error for empty domain
@@ -140,7 +140,7 @@ test_that("make_event validates domain parameter", {
       event_filter = "AESEV == 'MILD'",
       testcd = "HEADACHE"
     ),
-    "domain must be a non-empty character string"
+    "domain must be a non-empty string"
   )
 
   # Test error for non-existent domain
@@ -151,7 +151,7 @@ test_that("make_event validates domain parameter", {
       event_filter = "AESEV == 'MILD'",
       testcd = "HEADACHE"
     ),
-    "Domain 'nonexistent' not found in sdtm object"
+    "Expected domain missing in sdtm object: nonexistent"
   )
 
   # Test success with valid domain (case insensitive)
@@ -234,7 +234,7 @@ test_that("make_event validates analyte and testcd parameters", {
       event_filter = "AESEV == 'MILD'",
       analyte = 123
     ),
-    "analyte must be a single character string"
+    "analyte must be a character value"
   )
 
   # Test error for non-character testcd
@@ -245,7 +245,7 @@ test_that("make_event validates analyte and testcd parameters", {
       event_filter = "AESEV == 'MILD'",
       testcd = 123
     ),
-    "testcd must be a single character string"
+    "testcd must be a character value"
   )
 })
 
@@ -261,7 +261,7 @@ test_that("make_event validates event_filter parameter", {
       event_filter = 123,
       testcd = "HEADACHE"
     ),
-    "event_filter must be a single character string"
+    "event_filter must be a character value"
   )
 
   # Test error for NULL event_filter
@@ -272,7 +272,7 @@ test_that("make_event validates event_filter parameter", {
       event_filter = NULL,
       testcd = "HEADACHE"
     ),
-    "event_filter must be a single character string"
+    "event_filter must not be NULL"
   )
 
   # Test error for invalid filter expression
@@ -284,7 +284,7 @@ test_that("make_event validates event_filter parameter", {
       testcd = "HEADACHE",
       silent = TRUE
     ),
-    "event filter.*is not valid"
+    "Column 'INVALID_COLUMN' not found in data"
   )
 
   # Test success with valid filter
@@ -313,7 +313,7 @@ test_that("make_event validates observation_filter parameter", {
       testcd = "HEADACHE",
       observation_filter = 123
     ),
-    "observation_filter must be a single character string"
+    "observation_filter must be a character value"
   )
 
   # Test error for invalid observation_filter
@@ -326,7 +326,7 @@ test_that("make_event validates observation_filter parameter", {
       observation_filter = "INVALID_COLUMN == 'VALUE'",
       silent = TRUE
     ),
-    "observation filter.*is not valid"
+    "Column 'INVALID_COLUMN' not found in data"
   )
 
   # Test error when observation_filter returns no entries
@@ -410,7 +410,7 @@ test_that("make_event validates logical parameters", {
       testcd = "HEADACHE",
       event_diff = "not_logical"
     ),
-    "event_diff must be a single logical value"
+    "event_diff must be a logical value"
   )
 
   # Test error for invalid metabolite
@@ -422,7 +422,7 @@ test_that("make_event validates logical parameters", {
       testcd = "HEADACHE",
       metabolite = "not_logical"
     ),
-    "metabolite must be a single logical value"
+    "metabolite must be a logical value"
   )
 
   # Test error for invalid silent
@@ -434,7 +434,7 @@ test_that("make_event validates logical parameters", {
       testcd = "HEADACHE",
       silent = "not_logical"
     ),
-    "silent must be a single logical value"
+    "silent must be a logical value"
   )
 
   # Test success with valid logical parameters
@@ -508,7 +508,7 @@ test_that("make_event validates character parameters", {
       testcd = "HEADACHE",
       parent = 123
     ),
-    "parent must be a single character string"
+    "parent must be a character value"
   )
 
   # Test error for invalid subject_filter
@@ -520,7 +520,7 @@ test_that("make_event validates character parameters", {
       testcd = "HEADACHE",
       subject_filter = 123
     ),
-    "subject_filter must be a single character string"
+    "subject_filter must be a character value"
   )
 
   expect_error(
@@ -531,7 +531,7 @@ test_that("make_event validates character parameters", {
       testcd = "HEADACHE",
       dtc_field = 123
     ),
-    "dtc_field must be a single character string"
+    "dtc_field must be a character value"
   )
 
   # Test error for invalid keep (should allow multiple)
@@ -543,7 +543,7 @@ test_that("make_event validates character parameters", {
       testcd = "HEADACHE",
       keep = 123
     ),
-    "keep must be a single character string"
+    "keep must be a character value"
   )
 
   # Test success with valid keep (multiple values)

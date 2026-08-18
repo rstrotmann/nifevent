@@ -51,31 +51,21 @@ make_event <- function(
   silent = NULL
 ) {
   # Validate inputs
-  if (!inherits(sdtm, "sdtm")) {
-    stop("sdtm must be an sdtm object")
-  }
+  nif:::validate_argument(domain, "character")
+  nif:::validate_sdtm(sdtm, domain)
+  nif:::validate_argument(event_filter, "character")
+  nif:::validate_argument(testcd, "character", allow_null = TRUE)
 
-  if (is.null(analyte) && is.null(testcd)) {
-    stop("analyte and testcd cannot be both NULL!")
-  }
-
-  # Validate other parameters
-  validate_char_param(domain, "domain")
-  validate_char_param(testcd, "testcd", allow_null = TRUE)
-  validate_char_param(event_filter, "event_filter")
-  validate_logical_param(event_diff, "event_diff")
-  validate_char_param(analyte, "analyte", allow_null = TRUE)
-  validate_char_param(parent, "parent", allow_null = TRUE)
-  validate_logical_param(metabolite, "metabolite")
-
-  nif:::validate_numeric_param(cmt, "cmt", allow_na = TRUE, allow_null = TRUE)
-
-  validate_char_param(subject_filter, "subject_filter", allow_null = TRUE)
-  validate_char_param(observation_filter, "observation_filter",
-                      allow_null = TRUE)
-  validate_char_param(dtc_field, "dtc_field", allow_null = TRUE)
-  validate_char_param(keep, "keep", allow_null = TRUE, allow_multiple = TRUE)
-  validate_logical_param(silent, "silent", allow_null = TRUE)
+  nif:::validate_argument(event_diff, "logical")
+  nif:::validate_argument(analyte, "character", allow_null = TRUE)
+  nif:::validate_argument(parent, "character", allow_null = TRUE)
+  nif:::validate_argument(metabolite, "logical")
+  nif:::validate_argument(cmt, "numeric", allow_null = TRUE)
+  nif:::validate_argument(subject_filter, "character")
+  nif:::validate_argument(observation_filter, "character")
+  nif:::validate_argument(dtc_field, "character", allow_null = TRUE)
+  nif:::validate_argument(keep, "character", allow_null = TRUE, allow_multiple = TRUE)
+  nif:::validate_argument(silent, "logical", allow_null = TRUE)
 
   if (is.null(analyte) && is.null(testcd)) {
     stop("analyte and testcd cannot be both NULL!")
@@ -86,9 +76,6 @@ make_event <- function(
   }
 
   domain_name <- tolower(domain)
-  if (!domain_name %in% names(sdtm$domains)) {
-    stop(paste0("Domain '", domain_name, "' not found in sdtm object"))
-  }
 
   # Set analyte name
   if (is.null(analyte)) {
@@ -104,25 +91,14 @@ make_event <- function(
     dtc_field <- paste0(toupper(domain), "DTC")
   }
 
-  # Get subject data
-  tryCatch(
-    {
-      sbs <- nif:::make_subjects(
-        domain(sdtm, "dm"), domain(sdtm, "vs"), subject_filter, keep
-      )
-    },
-    error = function(e) {
-      stop(paste0("Error getting subject data: ", e$message))
-    }
+  sbs <- nif:::make_subjects(
+    nif::domain(sdtm, "dm"), nif::domain(sdtm, "vs"), subject_filter, keep
   )
 
   obj <- nif::domain(sdtm, domain_name) |>
     nif::lubrify_dates()
 
-  # check and apply observation filter
-  if (!nif:::is_valid_filter(obj, observation_filter)) {
-    stop(paste0("observation filter '", observation_filter, "' is not valid"))
-  }
+  nif:::validate_filter(observation_filter, obj)
 
   filtered_obj <- obj |>
     mutate(SRC_DOMAIN = .data$DOMAIN)
@@ -159,9 +135,7 @@ make_event <- function(
   }
 
   # check and apply event filter
-  if (!nif:::is_valid_filter(filtered_obj, event_filter)) {
-    stop(paste0("event filter '", event_filter, "' is not valid"))
-  }
+  nif:::validate_filter(event_filter, filtered_obj)
 
   # flag marks the event condition, dflag marks a change in the event condition
   # ev_flag marks the attainment of the condition
@@ -254,34 +228,27 @@ add_event_observation <- function(
   silent = NULL
 ) {
   # Validate inputs
-  if (!inherits(nif, "nif")) {
-    stop("nif must be an nif object")
-  }
+  nif:::validate_nif(nif)
+  nif:::validate_argument(domain, "character")
+  nif:::validate_sdtm(sdtm, domain)
+  nif:::validate_argument(event_filter, "character")
+  nif:::validate_argument(testcd, "character", allow_null = TRUE)
 
-  if (!inherits(sdtm, "sdtm")) {
-    stop("sdtm must be an sdtm object")
-  }
+  nif:::validate_argument(event_diff, "logical")
+  nif:::validate_argument(analyte, "character", allow_null = TRUE)
+  nif:::validate_argument(parent, "character", allow_null = TRUE)
+  nif:::validate_argument(metabolite, "logical")
+  nif:::validate_argument(cmt, "numeric", allow_null = TRUE)
+  nif:::validate_argument(subject_filter, "character")
+  nif:::validate_argument(observation_filter, "character")
+  nif:::validate_argument(dtc_field, "character", allow_null = TRUE)
+  nif:::validate_argument(keep, "character", allow_null = TRUE, allow_multiple = TRUE)
+  nif:::validate_argument(debug, "logical")
+  nif:::validate_argument(silent, "logical", allow_null = TRUE)
 
   if (is.null(analyte) && is.null(testcd)) {
     stop("analyte and testcd cannot be both NULL!")
   }
-
-  # Validate other parameters
-  validate_char_param(domain, "domain")
-  validate_char_param(testcd, "testcd", allow_null = TRUE)
-  validate_char_param(event_filter, "event_filter")
-  validate_logical_param(event_diff, "event_diff")
-  validate_char_param(analyte, "analyte", allow_null = TRUE)
-  validate_char_param(parent, "parent", allow_null = TRUE)
-  validate_logical_param(metabolite, "metabolite")
-  validate_numeric_param(cmt, "cmt", allow_null = TRUE)
-  validate_char_param(subject_filter, "subject_filter", allow_null = TRUE)
-  validate_char_param(observation_filter, "observation_filter",
-                      allow_null = TRUE)
-  validate_char_param(dtc_field, "dtc_field", allow_null = TRUE)
-  validate_char_param(keep, "keep", allow_null = TRUE, allow_multiple = TRUE)
-  validate_logical_param(debug, "debug")
-  validate_logical_param(silent, "silent", allow_null = TRUE)
 
   debug <- isTRUE(debug) | isTRUE(nif:::nif_option_value("debug"))
   if (isTRUE(debug)) {

@@ -22,6 +22,7 @@ create_mock_nif_with_events <- function() {
     nif::nif()
 }
 
+
 test_that("kmplot validates input parameters correctly", {
   # Create mock data
   mock_nif <- create_mock_nif_with_events()
@@ -41,7 +42,7 @@ test_that("kmplot validates input parameters correctly", {
       nif = mock_nif,
       analyte = NULL
     ),
-    "analyte must be a single character string"
+    "analyte must not be NULL"
   )
 
   # Test error for non-existent analyte
@@ -50,9 +51,10 @@ test_that("kmplot validates input parameters correctly", {
       nif = mock_nif,
       analyte = "NONEXISTENT"
     ),
-    "No data found for analyte 'NONEXISTENT'"
+    "Analyte NONEXISTENT not found in nif object!"
   )
 })
+
 
 test_that("kmplot handles empty data sets", {
   # Create empty nif object
@@ -65,7 +67,7 @@ test_that("kmplot handles empty data sets", {
       nif = empty_nif,
       analyte = "EV_HEADACHE"
     ),
-    "No data found for analyte 'EV_HEADACHE'"
+    "Analyte EV_HEADACHE not found in nif object!"
   )
 
   # Test with nif that has no events for the analyte
@@ -77,9 +79,10 @@ test_that("kmplot handles empty data sets", {
       nif = no_events_nif,
       analyte = "EV_HEADACHE"
     ),
-    "No data found for analyte 'EV_HEADACHE'"
+    "Analyte EV_HEADACHE not found in nif object!"
   )
 })
+
 
 test_that("kmplot handles dose filtering correctly", {
   mock_nif <- create_mock_nif_with_events()
@@ -110,6 +113,7 @@ test_that("kmplot handles dose filtering correctly", {
   )
 })
 
+
 test_that("kmplot handles grouping correctly", {
   mock_nif <- create_mock_nif_with_events()
 
@@ -120,7 +124,7 @@ test_that("kmplot handles grouping correctly", {
       analyte = "EV_HEADACHE",
       group = "NONEXISTENT_GROUP"
     ),
-    "Grouping variable NONEXISTENT_GROUP not found in nif data set"
+    "Missing required fields: NONEXISTENT_GROUP"
   )
 
   # Test with valid group variable
@@ -132,6 +136,7 @@ test_that("kmplot handles grouping correctly", {
     )
   )
 })
+
 
 test_that("kmplot handles edge cases in survival data", {
   mock_nif <- create_mock_nif_with_events()
@@ -160,6 +165,7 @@ test_that("kmplot handles edge cases in survival data", {
     )
   )
 })
+
 
 test_that("kmplot handles time calculations correctly", {
   mock_nif <- create_mock_nif_with_events()
@@ -191,6 +197,7 @@ test_that("kmplot handles time calculations correctly", {
   )
 })
 
+
 test_that("kmplot validates additional parameters", {
   mock_nif <- create_mock_nif_with_events()
 
@@ -201,7 +208,7 @@ test_that("kmplot validates additional parameters", {
       analyte = "EV_HEADACHE",
       convert_tafd_h_to_d = "not_logical"
     ),
-    "convert_tafd_h_to_d must be a single logical value"
+    "convert_tafd_h_to_d must be a logical value"
   )
 
   # Test silent parameter validation
@@ -211,7 +218,7 @@ test_that("kmplot validates additional parameters", {
       analyte = "EV_HEADACHE",
       silent = "not_logical"
     ),
-    "silent must be a single logical value"
+    "silent must be a logical value"
   )
 
   # Test title parameter validation
@@ -221,7 +228,7 @@ test_that("kmplot validates additional parameters", {
       analyte = "EV_HEADACHE",
       title = 123
     ),
-    "title must be a single character string"
+    "title must be a character value"
   )
 
   # Test y_label parameter validation
@@ -231,9 +238,10 @@ test_that("kmplot validates additional parameters", {
       analyte = "EV_HEADACHE",
       y_label = 123
     ),
-    "y_label must be a single character string"
+    "y_label must be a character value"
   )
 })
+
 
 test_that("kmplot handles convert_tafd_h_to_d parameter correctly", {
   mock_nif <- create_mock_nif_with_events()
@@ -254,6 +262,7 @@ test_that("kmplot handles convert_tafd_h_to_d parameter correctly", {
   )
   expect_true(inherits(result2, "ggsurvfit"))
 })
+
 
 test_that("kmplot handles edge cases with survival analysis", {
   mock_nif <- create_mock_nif_with_events()
@@ -281,6 +290,7 @@ test_that("kmplot handles edge cases with survival analysis", {
   )
 })
 
+
 test_that("kmplot returns correct object structure", {
   mock_nif <- create_mock_nif_with_events()
 
@@ -294,6 +304,7 @@ test_that("kmplot returns correct object structure", {
   expect_true(inherits(result, "ggplot"))
   expect_true(inherits(result, "ggsurvfit"))
 })
+
 
 test_that("kmplot handles legend and labels correctly", {
   mock_nif <- create_mock_nif_with_events()
@@ -319,6 +330,7 @@ test_that("kmplot handles legend and labels correctly", {
   expect_true(inherits(result2, "ggsurvfit"))
 })
 
+
 test_that("kmplot handles data with only one group", {
   mock_nif <- create_mock_nif_with_events()
 
@@ -335,6 +347,7 @@ test_that("kmplot handles data with only one group", {
   )
 })
 
+
 test_that("kmplot handles data with missing values in group variable", {
   mock_nif <- create_mock_nif_with_events()
 
@@ -350,4 +363,5 @@ test_that("kmplot handles data with missing values in group variable", {
     )
   )
 })
+
 

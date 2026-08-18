@@ -32,37 +32,12 @@ make_surv_dataset <- function(
   silent = NULL
 ) {
   # INPUT VALIDATIONS
-  nif:::validate_nif(nif)
-  validate_char_param(analyte, "analyte")
-  validate_char_param(group, "group", allow_null = TRUE, allow_multiple = TRUE)
-  validate_logical_param(convert_tafd_h_to_d, "convert_tafd_h_to_d")
-  validate_logical_param(silent, "silent", allow_null = TRUE)
-
-  # Check for required columns
-  required_cols <- c("ANALYTE", "EVID", "DV", "TAFD", "ID")
-  missing_cols <- setdiff(required_cols, names(nif))
-  if (length(missing_cols) > 0) {
-    stop(paste0(
-      "Required ", plural("column", length(missing_cols) > 1), " ",
-      nice_enumeration(missing_cols), " not found in nif data set"
-    ))
-  }
-
-  # Check if analyte exists in the data
-  if (!analyte %in% unique(nif$ANALYTE)) {
-    stop(paste0("No data found for analyte '", analyte, "'"))
-  }
-
-  # Check if the group fields exists in the data
-  if (!is.null(group)) {
-    missing_group <- setdiff(group, unique(names(nif)))
-    if (length(missing_group) > 0) {
-      stop(paste0(
-        "Grouping ", plural("variable", length(missing_group) > 1), " ",
-        nice_enumeration(missing_group), " not found in nif data set"
-      ))
-    }
-  }
+  nif:::validate_argument(analyte, "character")
+  nif:::validate_argument(group, "character", allow_multiple = TRUE, allow_null = TRUE)
+  nif:::validate_nif(nif, group)
+  nif:::validate_analyte(nif, analyte)
+  nif:::validate_argument(convert_tafd_h_to_d, "logical")
+  nif:::validate_argument(silent, "logical", allow_null = TRUE)
 
   # DATA PREPROCESSING AND VALIDATION
   # Filter data for the analyte
@@ -180,23 +155,18 @@ kmplot <- function(
   silent = NULL
 ) {
   # INPUT VALIDATIONS
-  nif:::validate_nif(nif)
-  validate_logical_param(convert_tafd_h_to_d, "convert_tafd_h_to_d")
-  validate_logical_param(show_censoring, "show_censoring")
-  validate_logical_param(show_risk_table, "show_risk_table")
-  validate_logical_param(show_ci, "show_ci")
-  validate_logical_param(silent, "silent", allow_null = TRUE)
-
-  # Validate analyte, title, y_label
-  validate_char_param(analyte, "analyte")
-  validate_char_param(title, "title", allow_null = TRUE)
-  validate_char_param(y_label, "y_label", allow_null = TRUE)
-  validate_char_param(group, "group", allow_multiple = TRUE, allow_null = TRUE)
-
-  # Check if analyte exists in the data
-  if (!analyte %in% unique(nif$ANALYTE)) {
-    stop(paste0("No data found for analyte '", analyte, "'"))
-  }
+  nif:::validate_argument(analyte, "character")
+  nif:::validate_argument(group, "character", allow_multiple = TRUE, allow_null = TRUE)
+  nif:::validate_nif(nif, group)
+  nif:::validate_argument(dose, "numeric", allow_multiple = TRUE, allow_null = TRUE)
+  nif:::validate_analyte(nif, analyte)
+  nif:::validate_argument(convert_tafd_h_to_d, "logical")
+  nif:::validate_argument(title, "character", allow_null = TRUE)
+  nif:::validate_argument(y_label, "character", allow_null = TRUE)
+  nif:::validate_argument(show_censoring, "logical")
+  nif:::validate_argument(show_risk_table, "logical")
+  nif:::validate_argument(show_ci, "logical")
+  nif:::validate_argument(silent, "logical", allow_null = TRUE)
 
   # DATA PREPROCESSING
   # Dose filtering

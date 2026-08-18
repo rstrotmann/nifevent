@@ -42,7 +42,7 @@ test_that("make_surv_dataset validates input parameters correctly", {
       nif = mock_nif,
       analyte = NULL
     ),
-    "analyte must be a single character string"
+    "analyte must not be NULL"
   )
 
   # Test error for non-character analyte
@@ -51,7 +51,7 @@ test_that("make_surv_dataset validates input parameters correctly", {
       nif = mock_nif,
       analyte = 123
     ),
-    "analyte must be a single character string"
+    "analyte must be a character value"
   )
 
   # Test error for invalid convert_tafd_h_to_d parameter
@@ -61,7 +61,7 @@ test_that("make_surv_dataset validates input parameters correctly", {
       analyte = "EV_HEADACHE",
       convert_tafd_h_to_d = "not_logical"
     ),
-    "convert_tafd_h_to_d must be a single logical value"
+    "convert_tafd_h_to_d must be a logical value"
   )
 
   # Test error for invalid silent parameter
@@ -71,7 +71,7 @@ test_that("make_surv_dataset validates input parameters correctly", {
       analyte = "EV_HEADACHE",
       silent = "not_logical"
     ),
-    "silent must be a single logical value"
+    "silent must be a logical value"
   )
 })
 
@@ -85,7 +85,7 @@ test_that("make_surv_dataset validates required columns", {
       nif = incomplete_nif,
       analyte = "EV_HEADACHE"
     ),
-    "Required column ANALYTE not found in nif data set"
+    "Missing required fields: ANALYTE"
   )
 
   # Test missing multiple columns
@@ -110,9 +110,10 @@ test_that("make_surv_dataset validates analyte existence", {
       nif = mock_nif,
       analyte = "NONEXISTENT"
     ),
-    "No data found for analyte 'NONEXISTENT'"
+    "Analyte NONEXISTENT not found in nif object!"
   )
 })
+
 
 test_that("make_surv_dataset validates group variables", {
   mock_nif <- create_mock_nif_with_events()
@@ -124,7 +125,7 @@ test_that("make_surv_dataset validates group variables", {
       analyte = "EV_HEADACHE",
       group = "NONEXISTENT_GROUP"
     ),
-    "Grouping variable NONEXISTENT_GROUP not found in nif data set"
+    "Missing required fields: NONEXISTENT_GROUP"
   )
 
   # Test error for multiple non-existent group variables
@@ -134,7 +135,7 @@ test_that("make_surv_dataset validates group variables", {
       analyte = "EV_HEADACHE",
       group = c("NONEXISTENT1", "NONEXISTENT2")
     ),
-    "Grouping variables NONEXISTENT1 and NONEXISTENT2 not found in nif data set"
+    "Missing required fields: NONEXISTENT1 and NONEXISTENT2"
   )
 
   # Test success with valid group variable
@@ -146,6 +147,7 @@ test_that("make_surv_dataset validates group variables", {
     )
   )
 })
+
 
 test_that("make_surv_dataset validates DV values", {
   mock_nif <- create_mock_nif_with_events()

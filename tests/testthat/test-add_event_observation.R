@@ -84,7 +84,7 @@ test_that("add_event_observation validates input parameters correctly", {
       domain = "ae",
       event_filter = "AESEV == 'MILD'"
     ),
-    "nif must be an nif object"
+    "Input must be a nif object"
   )
 
   # Test error for non-sdtm object
@@ -95,7 +95,7 @@ test_that("add_event_observation validates input parameters correctly", {
       domain = "ae",
       event_filter = "AESEV == 'MILD'"
     ),
-    "sdtm must be an sdtm object"
+    "Input must be a sdtm object"
   )
 
   # Test error for invalid metabolite parameter
@@ -108,7 +108,7 @@ test_that("add_event_observation validates input parameters correctly", {
       event_filter = "AESEV == 'MILD'",
       metabolite = "TRUE"
     ),
-    "metabolite must be a single logical value"
+    "metabolite must be a logical value"
   )
 
   expect_error(
@@ -120,7 +120,7 @@ test_that("add_event_observation validates input parameters correctly", {
       event_filter = "AESEV == 'MILD'",
       metabolite = c(TRUE, FALSE)
     ),
-    "metabolite must be a single logical value"
+    "metabolite must be a single value"
   )
 })
 
@@ -180,7 +180,7 @@ test_that("add_event_observation handles debug parameter correctly", {
       debug = "not_logical",
       silent = TRUE
     ),
-    "debug must be a single logical value"
+    "debug must be a logical value"
   )
 })
 
@@ -200,7 +200,7 @@ test_that("add_event_observation handles event_diff parameter correctly", {
       event_diff = "not_logical",
       silent = TRUE
     ),
-    "event_diff must be a single logical value"
+    "event_diff must be a logical value"
   )
 })
 
@@ -220,7 +220,7 @@ test_that("add_event_observation handles keep parameter correctly", {
       keep = 123,  # Should be character
       silent = TRUE
     ),
-    "keep must be a single character string"
+    "keep must be a character value"
   )
 })
 
@@ -279,7 +279,7 @@ test_that("add_event_observation handles edge cases", {
       event_filter = "AESEV == 'MILD'",
       silent = TRUE
     ),
-    "Domain 'nonexistent' not found in sdtm object"
+    "Expected domain missing in sdtm object: nonexistent"
   )
 })
 
@@ -298,7 +298,7 @@ test_that("add_event_observation validates character parameters", {
       event_filter = "AESEV == 'MILD'",
       silent = TRUE
     ),
-    "domain must be a single character string"
+    "domain must be a character value"
   )
 
   # Test event_filter parameter validation
@@ -311,7 +311,7 @@ test_that("add_event_observation validates character parameters", {
       event_filter = 123,  # Should be character
       silent = TRUE
     ),
-    "event_filter must be a single character string"
+    "event_filter must be a character value"
   )
 
   # Test analyte parameter validation
@@ -325,7 +325,7 @@ test_that("add_event_observation validates character parameters", {
       analyte = 123,  # Should be character
       silent = TRUE
     ),
-    "analyte must be a single character string"
+    "analyte must be a character value"
   )
 })
 
