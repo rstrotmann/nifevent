@@ -8,6 +8,7 @@ and to explore events.
 You can install the development version of nifevent like so:
 
 ``` r
+
 devtools::install_github("rstrotmann/nifevent", build_vignettes=TRUE)
 ```
 
