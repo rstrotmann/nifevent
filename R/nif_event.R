@@ -29,7 +29,6 @@
 #' @return A data frame.
 #' @importFrom stats as.formula
 #' @importFrom lubridate date
-#' @importFrom nif lubrify_dates
 #' @import dplyr
 #' @import nif
 #' @export
@@ -96,7 +95,7 @@ make_event <- function(
   )
 
   obj <- nif::domain(sdtm, domain_name) |>
-    nif::lubrify_dates()
+    nif:::lubrify_dates()
 
   nif:::validate_filter(observation_filter, obj)
 

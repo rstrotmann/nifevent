@@ -20,8 +20,6 @@
 #'   defaults to TRUE.
 #' @returns A data frame.
 #' @import dplyr
-#' @importFrom nif plural
-#' @importFrom nif nice_enumeration
 #' @keywords internal
 #' @noRd
 make_surv_dataset <- function(
@@ -63,7 +61,7 @@ make_surv_dataset <- function(
   if (nrow(neg_tafd) > 0) {
     nif:::conditional_message(
       nrow(neg_tafd),
-      plural(" row", nrow(neg_tafd) > 1),
+      nif:::plural(" row", nrow(neg_tafd) > 1),
       " with negative TAFD removed from survival data set!",
       silent = silent
     )
@@ -179,8 +177,8 @@ kmplot <- function(
       missing_doses <- setdiff(dose, available_doses)
       stop(paste0(
         "No data found for specified ",
-        nif::plural("dose", length(missing_doses) > 1), ": ",
-        nif::nice_enumeration(missing_doses)
+        nif:::plural("dose", length(missing_doses) > 1), ": ",
+        nif:::nice_enumeration(missing_doses)
       ))
     }
   }
@@ -225,7 +223,7 @@ kmplot <- function(
     p <- p + add_censor_mark()
 
   # Handle legend and labels
-  legend <- if (!is.null(group)) nif::nice_enumeration(group) else NULL
+  legend <- if (!is.null(group)) nif:::nice_enumeration(group) else NULL
   if (is.null(y_label)) {
     y_label <- paste0("S[", analyte, "]")
   }
