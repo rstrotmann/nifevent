@@ -171,7 +171,7 @@ make_event <- function(
     mutate(TRTDY = as.numeric(
       difftime(
         lubridate::date(.data$DTC),
-        lubridate::date(nif::safe_min(.data$RFSTDTC))
+        lubridate::date(nif:::safe_min(.data$RFSTDTC))
       ),
       units = "days"
     ) + 1) |>
